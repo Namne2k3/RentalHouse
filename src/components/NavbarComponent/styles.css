@@ -1,0 +1,15 @@
+.header {
+    border-bottom: 1px solid #f0f0f0;
+    position: relative;
+    padding: 0 !important;
+}
+
+/* If you need to override specific Ant Design classes */
+.ant-layout-header {
+    padding: 0 !important;
+}
+
+/* For any other header wrappers */
+.header-wrapper {
+    padding: 0 !important;
+}

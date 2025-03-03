@@ -1,11 +1,11 @@
 import { DownOutlined, SearchOutlined } from '@ant-design/icons';
-import { AutoComplete, Button, Checkbox, Dropdown, Input, Slider } from 'antd';
+import { AutoComplete, Button, Dropdown, Input, Radio, Slider } from 'antd';
 import { ChangeEventHandler, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../hooks';
-import { AddressDTO, searchRentals, searchRentalsAddress } from '../../store/slices/searchSlice';
+import { AddressDTO, searchRentals, searchRentalsAddress, setPriceRange } from '../../store/slices/searchSlice';
 import './styles.css';
 
-import type { AutoCompleteProps, MenuProps } from 'antd';
+import type { AutoCompleteProps, MenuProps, RadioChangeEvent } from 'antd';
 import Text from '../TextComponent/Text';
 
 const searchResult = (addresses: AddressDTO[]) => {
@@ -32,14 +32,41 @@ const searchResult = (addresses: AddressDTO[]) => {
 
 const SearchComponent = () => {
     const dispatch = useAppDispatch();
-    const { search, addresses } = useAppSelector((state) => state.search);
+    const { search, addresses, priceRange } = useAppSelector((state) => state.search);
+    const [priceRangeState, setPriceRangeState] = useState(priceRange);
     const [options, setOptions] = useState<AutoCompleteProps['options']>([]);
     const [searchState, setSearchState] = useState(search);
-    const [priceRange, setPriceRange] = useState<[number, number]>([0, 10]);
-    const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
     const [dropdownOpen, setDropdownOpen] = useState(false);
+    const [selectedFilter, setSelectedFilter] = useState<string>('');
+
+    const handleFilterChange = (e: RadioChangeEvent) => {
+        console.log(e.target.value);
+
+        setSelectedFilter(e.target.value);
+        switch (e.target.value) {
+            case "0to3":
+                setPriceRangeState(() => [0, (3 * 1000000)])
+                break;
+
+            case "3to5":
+                setPriceRangeState(() => [(3 * 1000000), (5 * 1000000)])
+                break;
+
+            case "5to10":
+                setPriceRangeState(() => [(5 * 1000000), (10 * 1000000)])
+                break;
+
+            default:
+                break;
+        }
+    };
+
 
     const handleSearchRental = (search: string) => {
+        if (priceRangeState) {
+            dispatch(setPriceRange(priceRangeState))
+        }
+
         if (search) {
             dispatch(searchRentals({ search }));
         }
@@ -55,13 +82,11 @@ const SearchComponent = () => {
         console.log(value);
     };
 
-    const handlePriceRangeChange = (value: [number, number]) => {
-        setPriceRange(value);
-    };
+    // const handlePriceRangeChange = (value: [number, number]) => {
+    //     console.log(value);
+    //     setPriceRange(value);
+    // };
 
-    const handleFilterChange = (checkedValues: string[]) => {
-        setSelectedFilters(checkedValues);
-    };
 
     const items: MenuProps['items'] = [
         {
@@ -69,7 +94,6 @@ const SearchComponent = () => {
             label: (
                 <div
                     style={{ padding: '12px', minWidth: '300px' }}
-                    // Ngăn không cho click bên trong menu đóng dropdown
                     onClick={(e) => e.stopPropagation()}
                 >
                     <div>
@@ -77,27 +101,31 @@ const SearchComponent = () => {
                         <Slider
                             range
                             min={0}
-                            max={10}
-                            value={priceRange}
-                            onChange={handlePriceRangeChange}
-                            marks={{
-                                0: '0tr',
-                                5: '5tr',
-                                10: '10tr'
-                            }}
+                            max={10000000}
+                            value={priceRangeState}
+                            onChange={setPriceRangeState}
+                        // marks={{
+                        //     0: '0tr',
+                        //     5: '5tr',
+                        //     10: '10tr'
+                        // }}
                         />
                     </div>
                     <div style={{ marginTop: '20px' }}>
                         <h4>Lọc nhanh</h4>
-                        <Checkbox.Group
-                            options={[
-                                { label: 'Dưới 3 triệu', value: 'under3' },
-                                { label: 'Từ 3-5 triệu', value: '3to5' },
-                                { label: 'Trên 5 triệu', value: 'above5' },
-                            ]}
-                            value={selectedFilters}
+                        <Radio.Group
+                            value={selectedFilter}
                             onChange={handleFilterChange}
-                        />
+                            style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '8px'
+                            }}
+                        >
+                            <Radio value="0to3">Từ 1 đến 3 triệu</Radio>
+                            <Radio value="3to5">Từ 3 đến 5 triệu</Radio>
+                            <Radio value="5to10">Từ 5 đến 10 triệu</Radio>
+                        </Radio.Group>
                     </div>
                 </div>
             ),

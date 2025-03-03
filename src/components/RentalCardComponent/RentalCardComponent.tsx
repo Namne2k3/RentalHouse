@@ -6,7 +6,7 @@ import { NhaTro } from "../../hooks/rentalHook";
 import Text from "../TextComponent/Text";
 import './styles.css';
 import 'dayjs/locale/vi';
-import { formatPhoneNumber } from "../../utils";
+import { formatPhoneNumber, formatCurrencyVnd } from "../../utils";
 
 const { Paragraph } = Typography;
 type Props = {
@@ -56,9 +56,9 @@ const RentalCardComponent = ({ rental, handleCopyPhoneNumber, onAddToSaveList, o
                     text={rental.title.toString()}
                 />
                 <Space style={{ marginTop: 4 }}>
-                    <Text style={{ display: "inline" }} fontFamily={fonts.semiBold} color="red" text={rental.price?.toString() ?? ''} />
+                    <Text style={{ display: "inline" }} fontFamily={fonts.semiBold} color="red" text={`${formatCurrencyVnd(parseInt(rental.price))}/tháng`} />
                     <Text text="." style={{ display: "inline" }} />
-                    <Text style={{ display: "inline" }} fontFamily={fonts.semiBold} color="red" text={rental.area?.toString() ?? ''} />
+                    <Text style={{ display: "inline" }} fontFamily={fonts.semiBold} color="red" text={`${rental.area?.toString()} m2`} />
                     <Text text="." style={{ display: "inline" }} />
                 </Space>
                 <Paragraph

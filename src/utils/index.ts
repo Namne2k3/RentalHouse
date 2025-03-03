@@ -7,3 +7,11 @@ export const formatPhoneNumber = (phoneNumber: string | undefined) => {
     }
     return phoneNumber;
 };
+
+export const formatCurrencyVnd = (amount: number): string => {
+    return new Intl.NumberFormat('vi-VN', {
+        style: 'currency',
+        currency: 'VND',
+        maximumFractionDigits: 0
+    }).format(amount);
+};

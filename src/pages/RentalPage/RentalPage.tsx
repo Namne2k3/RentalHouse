@@ -14,9 +14,9 @@ import SearchComponent from "../../components/SearchComponent/SearchComponent";
 const RentalPage = () => {
     const dispatch = useAppDispatch();
     const savedRentals = useAppSelector(savedRentalsSelector);
-    const { search } = useAppSelector((state) => state.search)
+    const { search, priceRange } = useAppSelector((state) => state.search)
     const { currentPagination, currentPageSize } = useAppSelector((state) => state.page);
-    const { data: rentals, isLoading, error } = useRentals({ page: currentPagination, pageSize: currentPageSize, address: search });
+    const { data: rentals, isLoading, error } = useRentals({ page: currentPagination, pageSize: currentPageSize, address: search, price1: priceRange[0], price2: priceRange[1] });
 
     const handleChangePagination = useCallback((number: number, pageSize: number) => {
         dispatch(setCurrentPagination({ currentPagination: number, currentPageSize: pageSize }));
@@ -33,7 +33,7 @@ const RentalPage = () => {
 
     const handleCopyPhoneNumber = useCallback((phoneNumber: string) => {
         navigator.clipboard.writeText(phoneNumber)
-        alert("Copied the text: " + phoneNumber);
+        alert("Đã sao chép số điện thoại: " + phoneNumber);
     }, [])
 
     if (isLoading) {

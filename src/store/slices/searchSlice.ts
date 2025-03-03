@@ -8,7 +8,8 @@ export interface AddressDTO {
 
 
 export interface SearchState {
-    addresses: AddressDTO[] | null
+    addresses: AddressDTO[] | null;
+    priceRange: number[]
     search: string;
     error: string | null;
     isLoading: boolean;
@@ -16,6 +17,7 @@ export interface SearchState {
 
 const initialState: SearchState = {
     addresses: null,
+    priceRange: [0, 10 * 1000000],
     search: "",
     isLoading: false,
     error: null
@@ -36,8 +38,6 @@ export const searchRentalsAddress = createAsyncThunk(
     }
 )
 
-
-
 const searchSlice = createSlice({
     name: "search",
     initialState: initialState,
@@ -45,6 +45,9 @@ const searchSlice = createSlice({
         searchRentals: (state, action: PayloadAction<{ search: string }>) => {
             state.search = action.payload.search
         },
+        setPriceRange: (state, action: PayloadAction<number[]>) => {
+            state.priceRange = action.payload
+        }
     },
     extraReducers(builder) {
         builder
@@ -74,5 +77,5 @@ const searchSlice = createSlice({
     },
 })
 
-export const { searchRentals } = searchSlice.actions
+export const { searchRentals, setPriceRange } = searchSlice.actions
 export default searchSlice.reducer

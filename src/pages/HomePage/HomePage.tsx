@@ -6,6 +6,8 @@ import { useAppSelector } from "../../hooks";
 import RentalPage from "../RentalPage/RentalPage";
 import NewsPage from "../NewsPage/NewsPage";
 import ProfilePage from "../ProfilePage/ProfilePage";
+import './styles.css'
+import { COLORS } from "../../constants/colors";
 const headerStyle: React.CSSProperties = {
     textAlign: 'center',
     color: '#fff',
@@ -31,7 +33,8 @@ const siderStyle: React.CSSProperties = {
     color: '#fff',
     margin: 16,
     marginLeft: 0,
-    border: '1px solid #000'
+    border: `1px solid ${COLORS.TAUPE}`,
+    borderRadius: 12
 };
 
 const footerStyle: React.CSSProperties = {
@@ -73,7 +76,7 @@ const HomePage = () => {
                             })()
                         }
                     </Content>
-                    <Sider width="25%" style={siderStyle}>
+                    <Sider className="sider_layout" width="25%" style={siderStyle}>
                         Sider
                     </Sider>
                 </Layout>

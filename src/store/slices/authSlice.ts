@@ -98,7 +98,6 @@ const authSlice = createSlice({
                 loginUser.rejected,
                 (state, action) => {
                     state.user = null;
-                    state.token = null;
                     state.message = null;
                     state.isLoading = false;
                     state.error = (action.payload as { message: string }).message;
@@ -144,7 +143,6 @@ const authSlice = createSlice({
                 state.isLoading = false;
                 state.error = action.payload as string;
                 state.token = null;
-                localStorage.removeItem("token");
             });
     },
 });

@@ -1,0 +1,11 @@
+.custom-search-button .ant-input-search-button {
+    background-color: #5d5c61 !important;
+    /* Use your desired color */
+    border-color: #5d5c61 !important;
+}
+
+.custom-search-button .ant-input-search-button:hover {
+    background-color: #557a95 !important;
+    /* Darker shade for hover */
+    border-color: #557a95 !important;
+}

@@ -7,7 +7,7 @@ const api = axios.create({
     headers: {
         "Content-Type": "application/json",
     },
-    timeout: 4000
+    timeout: 8000
 });
 
 // config cho axios nếu có token sẽ gửi token kèm theo cho mỗi request

@@ -1,0 +1,5 @@
+@media screen and (max-width: 768px) {
+    .sider_layout {
+        display: none;
+    }
+}

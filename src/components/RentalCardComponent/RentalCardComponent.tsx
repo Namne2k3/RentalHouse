@@ -1,16 +1,22 @@
-import { HeartFilled, PhoneFilled, UserOutlined } from "@ant-design/icons"
-import { Avatar, Flex, Image, Space, Typography } from "antd"
-import { COLORS } from "../../constants/colors"
-import { fonts } from "../../constants/fonts"
-import { NhaTro } from "../../hooks/rentalHook"
-import Text from "../TextComponent/Text"
-import './styles.css'
-import 'dayjs/locale/vi'
-import { formatPhoneNumber } from "../../utils"
-const { Paragraph } = Typography
+import { HeartFilled, HeartOutlined, PhoneFilled, UserOutlined } from "@ant-design/icons";
+import { Avatar, Flex, Image, Space, Typography } from "antd";
+import { COLORS } from "../../constants/colors";
+import { fonts } from "../../constants/fonts";
+import { NhaTro } from "../../hooks/rentalHook";
+import Text from "../TextComponent/Text";
+import './styles.css';
+import 'dayjs/locale/vi';
+import { formatPhoneNumber } from "../../utils";
 
-const RentalCardComponent = ({ rental, onAddToSaveList }: { rental: NhaTro, onAddToSaveList: (id: number) => void }) => {
-
+const { Paragraph } = Typography;
+type Props = {
+    rental: NhaTro,
+    onAddToSaveList: (id: number) => void,
+    onRemoveFromSaveList: (id: number) => void,
+    isSaved: boolean,
+    handleCopyPhoneNumber: (phoneNumber: string) => void
+}
+const RentalCardComponent = ({ rental, handleCopyPhoneNumber, onAddToSaveList, onRemoveFromSaveList, isSaved = false }: Props) => {
     return (
         <Flex
             vertical
@@ -91,17 +97,22 @@ const RentalCardComponent = ({ rental, onAddToSaveList }: { rental: NhaTro, onAd
                 </Flex>
 
                 <Flex align="center" gap={8}>
-                    <Flex gap={8} align="center" style={{ cursor: "pointer", padding: 8, backgroundColor: COLORS.DARK_SLATE, borderRadius: 12 }}>
+                    <Flex onClick={() => handleCopyPhoneNumber(rental.phoneNumber)} gap={8} align="center" style={{ cursor: "pointer", padding: 8, backgroundColor: COLORS.DARK_SLATE, borderRadius: 12 }}>
                         <PhoneFilled style={{ fontSize: 18 }} color="#fff" />
                         <Text style={{ margin: 0, padding: 0 }} fontFamily={fonts.bold} text={formatPhoneNumber(rental.phoneNumber)} color="#fff" />
                     </Flex>
-                    <Flex onClick={() => onAddToSaveList(rental.id)} align="center" style={{ cursor: "pointer", padding: 8, backgroundColor: COLORS.DARK_SLATE, borderRadius: 12 }}>
-                        <HeartFilled style={{ fontSize: 18 }} />
+                    <Flex onClick={isSaved ? () => onRemoveFromSaveList(rental.id) : () => onAddToSaveList(rental.id)} align="center" style={{ cursor: "pointer", padding: 8, backgroundColor: COLORS.DARK_SLATE, borderRadius: 12 }}>
+                        {
+                            isSaved ?
+                                <HeartFilled style={{ fontSize: 18, color: COLORS.TAUPE }} />
+                                :
+                                <HeartOutlined style={{ fontSize: 18 }} />
+                        }
                     </Flex>
                 </Flex>
             </Flex>
         </Flex>
-    )
-}
+    );
+};
 
-export default RentalCardComponent
+export default RentalCardComponent;

@@ -39,6 +39,7 @@ export interface NhaTro {
 }
 
 interface RentalFilters {
+    address?: string,
     page?: number,
     pageSize?: number,
     city?: string,
@@ -64,9 +65,7 @@ export const useRentals = (filters: RentalFilters = {}) => {
         staleTime: Infinity,
         refetchOnMount: false,
         refetchOnWindowFocus: false,
-        retry: (failureCount, error: { code: string }) => {
-            return !(error.code === 'ECONNABORTED') && failureCount < 2;
-        },
+        retry: 2,
         retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
         gcTime: 1000 * 60 * 5
     });

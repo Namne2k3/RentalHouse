@@ -51,6 +51,8 @@ interface RentalFilters {
     bedRoomCount?: number,
     price1?: number,
     price2?: number,
+    area1?: number,
+    area2?: number
 }
 
 const fetchNhaTros = async (filters: RentalFilters): Promise<ResponseNhaTroInfo> => {

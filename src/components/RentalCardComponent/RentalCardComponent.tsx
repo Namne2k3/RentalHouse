@@ -7,6 +7,7 @@ import Text from "../TextComponent/Text";
 import './styles.css';
 import 'dayjs/locale/vi';
 import { formatPhoneNumber, formatCurrencyVnd } from "../../utils";
+import { Link } from "react-router";
 
 const { Paragraph } = Typography;
 type Props = {
@@ -18,6 +19,7 @@ type Props = {
 }
 const RentalCardComponent = ({ rental, handleCopyPhoneNumber, onAddToSaveList, onRemoveFromSaveList, isSaved = false }: Props) => {
     return (
+
         <Flex
             vertical
             style={{
@@ -27,47 +29,51 @@ const RentalCardComponent = ({ rental, handleCopyPhoneNumber, onAddToSaveList, o
                 boxShadow: 'rgba(50, 50, 93, 0.25) 0px 6px 12px -2px, rgba(0, 0, 0, 0.3) 0px 3px 7px -3px'
             }}
         >
-            <div style={{
-                width: '100%',
-                overflow: 'hidden'
-            }}>
-                <Image
-                    src={rental.imageUrls[0]}
-                    width='100%'
-                    height={300}
-                    style={{
-                        objectFit: 'cover',
-                        objectPosition: 'center',
-                        borderTopLeftRadius: 12,
-                        borderTopRightRadius: 12
-                    }}
-                    preview={false}
-                />
-            </div>
-            <div style={{
-                margin: '4px 16px 16px'
-            }}>
-                <Text
-                    style={{
-                        textTransform: "uppercase",
-                        marginBottom: 0
-                    }}
-                    fontFamily={fonts.bold}
-                    text={rental.title.toString()}
-                />
-                <Space style={{ marginTop: 4 }}>
-                    <Text style={{ display: "inline" }} fontFamily={fonts.semiBold} color="red" text={`${formatCurrencyVnd(parseInt(rental.price))}/tháng`} />
-                    <Text text="." style={{ display: "inline" }} />
-                    <Text style={{ display: "inline" }} fontFamily={fonts.semiBold} color="red" text={`${rental.area?.toString()} m2`} />
-                    <Text text="." style={{ display: "inline" }} />
-                </Space>
-                <Paragraph
-                    style={{ fontFamily: fonts.medium, marginTop: 4 }}
-                    ellipsis={{ rows: 3 }}
-                >
-                    {rental.description}
-                </Paragraph>
-            </div>
+            <Link
+                to={`/nhatro/detail/${rental.id}`}
+            >
+                <div style={{
+                    width: '100%',
+                    overflow: 'hidden'
+                }}>
+                    <Image
+                        src={rental.imageUrls[0]}
+                        width='100%'
+                        height={300}
+                        style={{
+                            objectFit: 'cover',
+                            objectPosition: 'center',
+                            borderTopLeftRadius: 12,
+                            borderTopRightRadius: 12
+                        }}
+                        preview={false}
+                    />
+                </div>
+                <div style={{
+                    margin: '4px 16px 16px'
+                }}>
+                    <Text
+                        style={{
+                            textTransform: "uppercase",
+                            marginBottom: 0
+                        }}
+                        fontFamily={fonts.bold}
+                        text={rental.title.toString()}
+                    />
+                    <Space style={{ marginTop: 4 }}>
+                        <Text style={{ display: "inline" }} fontFamily={fonts.semiBold} color="red" text={`${formatCurrencyVnd(parseInt(rental.price))}/tháng`} />
+                        <Text text="." style={{ display: "inline" }} />
+                        <Text style={{ display: "inline" }} fontFamily={fonts.semiBold} color="red" text={`${rental.area?.toString()} m2`} />
+                        <Text text="." style={{ display: "inline" }} />
+                    </Space>
+                    <Paragraph
+                        style={{ fontFamily: fonts.medium, marginTop: 4 }}
+                        ellipsis={{ rows: 3 }}
+                    >
+                        {rental.description}
+                    </Paragraph>
+                </div>
+            </Link>
 
             <Flex justify="space-between" align="center" style={{ borderRadius: 12, padding: 16 }}>
                 <Flex align="center">

@@ -8,7 +8,6 @@ import { AuthProvider } from './providers/AuhProvider.tsx'
 import { store } from './store/store.ts'
 import { FavoriteProvider } from './providers/FavoriteProvider.tsx'
 
-
 const queryClient = new QueryClient();
 
 createRoot(document.getElementById('root')!).render(

@@ -9,7 +9,8 @@ export interface AddressDTO {
 
 export interface SearchState {
     addresses: AddressDTO[] | null;
-    priceRange: number[]
+    priceRange: number[];
+    areaRange: number[];
     search: string;
     error: string | null;
     isLoading: boolean;
@@ -18,6 +19,7 @@ export interface SearchState {
 const initialState: SearchState = {
     addresses: null,
     priceRange: [0, 10 * 1000000],
+    areaRange: [0, 100],
     search: "",
     isLoading: false,
     error: null
@@ -47,6 +49,9 @@ const searchSlice = createSlice({
         },
         setPriceRange: (state, action: PayloadAction<number[]>) => {
             state.priceRange = action.payload
+        },
+        setAreaRange: (state, action: PayloadAction<number[]>) => {
+            state.areaRange = action.payload
         }
     },
     extraReducers(builder) {
@@ -77,5 +82,5 @@ const searchSlice = createSlice({
     },
 })
 
-export const { searchRentals, setPriceRange } = searchSlice.actions
+export const { searchRentals, setPriceRange, setAreaRange } = searchSlice.actions
 export default searchSlice.reducer

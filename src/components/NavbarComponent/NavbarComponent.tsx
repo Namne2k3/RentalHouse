@@ -84,6 +84,7 @@ export default function App() {
     };
 
     const onMenuItemClick: MenuProps["onClick"] = (e) => {
+        navigate(`/${e.key}`)
         dispatch(setCurrentPage(e.key))
     };
 
@@ -171,6 +172,7 @@ export default function App() {
                                         items: userMenuItems,
                                         onClick: handleMenuProfileClick
                                     }}
+                                    placement="bottomRight"
                                     trigger={['click']}
                                 >
                                     <Space

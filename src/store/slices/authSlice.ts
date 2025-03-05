@@ -1,6 +1,8 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import api from "../../services/api";
 import { AuthState, Response } from "../../types";
+import { removeCookie, setCookie } from "../../utils";
+import { USER_TOKEN_NAME } from "../../constants/url";
 
 export const getCurrentUser = createAsyncThunk(
     "auth/getCurrentUser",
@@ -67,7 +69,8 @@ const authSlice = createSlice({
             state.user = null;
             state.token = null;
             state.message = "Đăng xuất thành công!";
-            localStorage.removeItem("token");
+            // localStorage.removeItem("token");
+            removeCookie(USER_TOKEN_NAME)
         }
     },
 
@@ -90,7 +93,8 @@ const authSlice = createSlice({
                         state.user = action.payload.user
                         state.token = action.payload.message;
                         state.message = null;
-                        localStorage.setItem("token", action.payload.message);
+                        // localStorage.setItem("token", action.payload.message);
+                        setCookie(USER_TOKEN_NAME, action.payload.message)
                     }
                 }
             )

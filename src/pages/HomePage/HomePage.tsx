@@ -1,13 +1,11 @@
 import { Layout } from "antd";
 import { Content, Footer, Header } from "antd/es/layout/layout";
 import Sider from "antd/es/layout/Sider";
+import { ReactNode } from "react";
 import NavbarComponent from "../../components/NavbarComponent/NavbarComponent";
-import { useAppSelector } from "../../hooks";
-import RentalPage from "../RentalPage/RentalPage";
-import NewsPage from "../NewsPage/NewsPage";
-import ProfilePage from "../ProfilePage/ProfilePage";
-import './styles.css'
+import Text from "../../components/TextComponent/Text";
 import { COLORS } from "../../constants/colors";
+import './styles.css';
 const headerStyle: React.CSSProperties = {
     textAlign: 'center',
     color: '#fff',
@@ -51,8 +49,8 @@ const layoutStyle = {
     // border: '1px solid #000'
 };
 
-const HomePage = () => {
-    const { currentPage } = useAppSelector((state) => state.page)
+const HomePage = ({ children }: { children: ReactNode }) => {
+    // const { currentPage } = useAppSelector((state) => state.page)
     return (
         <>
             <Header style={headerStyle}>
@@ -62,22 +60,23 @@ const HomePage = () => {
                 <Layout>
                     <Content style={contentStyle}>
                         {
-                            (() => {
-                                switch (currentPage) {
-                                    case "":
-                                        return <RentalPage />;
-                                    case "news":
-                                        return <NewsPage />;
-                                    case "profile":
-                                        return <ProfilePage />;
-                                    default:
-                                        return <RentalPage />;
-                                }
-                            })()
+                            // (() => {
+                            //     switch (currentPage) {
+                            //         case "":
+                            //             return <RentalPage />;
+                            //         case "news":
+                            //             return <NewsPage />;
+                            //         case "profile":
+                            //             return <ProfilePage />;
+                            //         default:
+                            //             return <RentalPage />;
+                            //     }
+                            // })()
+                            children
                         }
                     </Content>
                     <Sider className="sider_layout" width="25%" style={siderStyle}>
-                        Sider
+                        <Text text="Các tin tức nổi bật" />
                     </Sider>
                 </Layout>
                 <Footer style={footerStyle}>Footer</Footer>

@@ -15,7 +15,7 @@ const defaultStyle: React.CSSProperties = {
     padding: '4px',
     lineHeight: '1.5',
     textAlign: 'left',
-    color: COLORS.DARK_SLATE,
+    color: 'black',
     fontFamily: fonts.regular,
     display: 'flex',     // Add this
     alignItems: 'center'

@@ -49,7 +49,12 @@ const layoutStyle = {
     // border: '1px solid #000'
 };
 
-const HomePage = ({ children }: { children: ReactNode }) => {
+interface HomePageProps {
+    children: ReactNode;
+    slider?: boolean; // Make slider optional with ?
+}
+
+const HomePage = ({ children, slider = true }: HomePageProps) => {
     // const { currentPage } = useAppSelector((state) => state.page)
     return (
         <>
@@ -75,9 +80,12 @@ const HomePage = ({ children }: { children: ReactNode }) => {
                             children
                         }
                     </Content>
-                    <Sider className="sider_layout" width="25%" style={siderStyle}>
-                        <Text text="Các tin tức nổi bật" />
-                    </Sider>
+                    {
+                        slider &&
+                        <Sider className="sider_layout" width="25%" style={siderStyle}>
+                            <Text text="Các tin tức nổi bật" />
+                        </Sider>
+                    }
                 </Layout>
                 <Footer style={footerStyle}>Footer</Footer>
             </Layout>

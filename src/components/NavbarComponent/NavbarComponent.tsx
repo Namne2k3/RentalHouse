@@ -18,6 +18,10 @@ const { useBreakpoint } = Grid;
 
 const userMenuItems: MenuProps['items'] = [
     {
+        key: 'generalSetting',
+        label: 'Tổng quan',
+    },
+    {
         key: 'profile',
         label: 'Thông tin cá nhân',
     },
@@ -73,14 +77,7 @@ export default function App() {
     const dispatch = useAppDispatch()
 
     const handleMenuProfileClick: MenuProps['onClick'] = (e) => {
-        switch (e.key) {
-            case 'logout':
-                dispatch(logout());
-                break;
-            case 'profile':
-                dispatch(setCurrentPage(e.key))
-                break;
-        }
+        navigate(`${e.key}`)
     };
 
     const onMenuItemClick: MenuProps["onClick"] = (e) => {
@@ -134,7 +131,7 @@ export default function App() {
         <nav className="header">
             <div style={styles.container}>
                 <div style={styles.menuContainer}>
-                    <Image style={{ borderRadius: 12 }} height={64} src="/images/logo.jpg" />
+                    <Image preview={false} style={{ borderRadius: 12 }} height={64} src="/images/logo.jpg" />
                     <Menu
                         style={styles.menu}
                         mode="horizontal"

@@ -30,7 +30,7 @@ function App() {
         </HomePage>
       } />
       <Route path='/nhatro/detail/:id' element={
-        <HomePage>
+        <HomePage slider={false}>
           <RentalDetailPage />
         </HomePage>
       } />

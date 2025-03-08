@@ -1,4 +1,4 @@
-import { FilterOutlined, SearchOutlined } from '@ant-design/icons';
+import { AreaChartOutlined, FilterOutlined, SearchOutlined } from '@ant-design/icons';
 import { AutoComplete, Button, Dropdown, Input, Radio, Slider } from 'antd';
 import { ChangeEventHandler, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../hooks';
@@ -284,7 +284,7 @@ const SearchComponent = () => {
                     placement="bottomRight"
                 >
                     <Button
-                        icon={<FilterOutlined />}
+                        icon={<AreaChartOutlined />}
                         onClick={(e) => {
                             e.stopPropagation();
                             setAreaDropdownOpen(!areaDropdownOpen);

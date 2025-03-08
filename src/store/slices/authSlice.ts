@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createAsyncThunk, createNextState, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import api from "../../services/api";
 import { AuthState, Response } from "../../types";
 import { removeCookie, setCookie } from "../../utils";
@@ -41,6 +41,38 @@ export const signUpUser = createAsyncThunk(
     async (credentials: { fullName: string, email: string, password: string, phoneNumber: string }, { rejectWithValue }) => {
         try {
             const response = await api.post("/Authentication/register", credentials);
+            return response.data;
+        } catch (error) {
+            if (error && typeof error === 'object' && 'response' in error) {
+                return rejectWithValue((error as { response: { data: unknown } }).response.data);
+            }
+            return rejectWithValue('Lỗi đã xảy ra!');
+        }
+    }
+)
+
+export const updateUser = createAsyncThunk(
+    "auth/update",
+    async (credentials: { fullName: string, email: string, phoneNumber: string, id: number }, { rejectWithValue }) => {
+        try {
+            await new Promise(resolve => setTimeout(resolve, 1000))
+            const response = await api.put("/User/updateUser", credentials);
+            return response.data;
+        } catch (error) {
+            if (error && typeof error === 'object' && 'response' in error) {
+                return rejectWithValue((error as { response: { data: unknown } }).response.data);
+            }
+            return rejectWithValue('Lỗi đã xảy ra!');
+        }
+    }
+)
+
+export const updatePasswordUser = createAsyncThunk(
+    "auth/changePassword",
+    async (credentials: { newPassword: string, currentPassword: string }, { rejectWithValue }) => {
+        try {
+            await new Promise(resolve => setTimeout(resolve, 1000))
+            const response = await api.put("/User/changePassword", credentials);
             return response.data;
         } catch (error) {
             if (error && typeof error === 'object' && 'response' in error) {
@@ -147,7 +179,38 @@ const authSlice = createSlice({
                 state.isLoading = false;
                 state.error = action.payload as string;
                 state.token = null;
-            });
+            })
+
+            // update user
+            .addCase(updateUser.pending, (state) => {
+                state.isLoading = true
+                state.message = null
+                state.error = null
+            })
+            .addCase(updateUser.fulfilled, (state, action) => {
+                state.isLoading = false
+                state.error = null
+                state.message = action.payload.message
+            })
+            .addCase(updateUser.rejected, (state) => {
+                state.isLoading = false
+            })
+
+            // update user password
+            .addCase(updatePasswordUser.pending, (state) => {
+                state.isLoading = true
+                state.message = null
+                state.error = null
+            })
+            .addCase(updatePasswordUser.fulfilled, (state, action) => {
+                state.isLoading = false
+                state.error = null
+                state.message = action.payload.message
+            })
+            .addCase(updatePasswordUser.rejected, (state, action) => {
+                state.isLoading = false
+                state.message = action.payload.message
+            })
     },
 });
 

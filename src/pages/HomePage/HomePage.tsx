@@ -6,6 +6,7 @@ import NavbarComponent from "../../components/NavbarComponent/NavbarComponent";
 import Text from "../../components/TextComponent/Text";
 import { COLORS } from "../../constants/colors";
 import './styles.css';
+import FooterComponent from "../../components/FooterComponent/FooterComponent";
 const headerStyle: React.CSSProperties = {
     textAlign: 'center',
     color: '#fff',
@@ -13,7 +14,7 @@ const headerStyle: React.CSSProperties = {
     height: '64px', // Thêm chiều cao cố định
     backgroundColor: 'transparent',
     overflow: 'hidden', // Ngăn content tràn ra ngoài
-    maxWidth: 1200,
+    maxWidth: 1000,
     margin: 'auto'
     // border: '1px solid #000'
 };
@@ -45,22 +46,26 @@ const layoutStyle = {
     borderRadius: 8,
     overflow: 'hidden',
     margin: '12px auto',
-    maxWidth: 1200,
+    maxWidth: 1000,
     // border: '1px solid #000'
 };
 
 interface HomePageProps {
     children: ReactNode;
     slider?: boolean; // Make slider optional with ?
+    navbar?: boolean
 }
 
-const HomePage = ({ children, slider = true }: HomePageProps) => {
+const HomePage = ({ children, slider = true, navbar = true }: HomePageProps) => {
     // const { currentPage } = useAppSelector((state) => state.page)
     return (
-        <>
-            <Header style={headerStyle}>
-                <NavbarComponent />
-            </Header>
+        <div style={{ margin: 12 }}>
+            {
+                navbar &&
+                <Header style={headerStyle}>
+                    <NavbarComponent />
+                </Header>
+            }
             <Layout style={layoutStyle}>
                 <Layout>
                     <Content style={contentStyle}>
@@ -87,9 +92,9 @@ const HomePage = ({ children, slider = true }: HomePageProps) => {
                         </Sider>
                     }
                 </Layout>
-                <Footer style={footerStyle}>Footer</Footer>
+                <FooterComponent />
             </Layout>
-        </>
+        </div>
     )
 }
 

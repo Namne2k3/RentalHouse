@@ -1,17 +1,16 @@
-import { LoadingOutlined, MenuOutlined } from "@ant-design/icons";
+import { CaretDownOutlined, LoadingOutlined, LogoutOutlined, MenuOutlined, SettingOutlined, UserOutlined } from "@ant-design/icons";
 import type { MenuProps } from 'antd';
-import { Button, Grid, Image, Menu, Space, Spin, theme } from "antd";
-import { useNavigate } from "react-router";
+import { Avatar, Button, Dropdown, Grid, Image, Menu, Space, Spin, theme } from "antd";
+import { Link, useNavigate } from "react-router";
 import { COLORS } from "../../constants/colors";
 import { fonts } from "../../constants/fonts";
 import { useAppDispatch, useAppSelector } from "../../hooks";
+import { logout } from "../../store/slices/authSlice";
 import { setCurrentPage } from "../../store/slices/pageSlice";
 import ButtonComponent from "../ButtonComponent/ButtonComponent";
-import { Avatar, Dropdown } from "antd";
-import { UserOutlined, CaretDownOutlined } from "@ant-design/icons";
-import { logout } from "../../store/slices/authSlice";
 import Text from "../TextComponent/Text";
-import './styles.css'
+
+import './styles.css';
 
 const { useToken } = theme;
 const { useBreakpoint } = Grid;
@@ -20,14 +19,12 @@ const userMenuItems: MenuProps['items'] = [
     {
         key: 'generalSetting',
         label: 'Tổng quan',
+        icon: <SettingOutlined />
     },
     {
         key: 'profile',
         label: 'Thông tin cá nhân',
-    },
-    {
-        key: 'settings',
-        label: 'Cài đặt',
+        icon: <UserOutlined />
     },
     {
         type: 'divider',
@@ -36,6 +33,7 @@ const userMenuItems: MenuProps['items'] = [
         key: 'logout',
         label: 'Đăng xuất',
         danger: true,
+        icon: <LogoutOutlined />
     },
 ];
 
@@ -77,7 +75,11 @@ export default function App() {
     const dispatch = useAppDispatch()
 
     const handleMenuProfileClick: MenuProps['onClick'] = (e) => {
-        navigate(`${e.key}`)
+        if (e.key == "logout") {
+            dispatch(logout())
+        } else {
+            navigate(`${e.key}`)
+        }
     };
 
     const onMenuItemClick: MenuProps["onClick"] = (e) => {
@@ -131,7 +133,11 @@ export default function App() {
         <nav className="header">
             <div style={styles.container}>
                 <div style={styles.menuContainer}>
-                    <Image preview={false} style={{ borderRadius: 12 }} height={64} src="/images/logo.jpg" />
+                    <Link
+                        to={"/"}
+                    >
+                        <Image preview={false} style={{ borderRadius: 12 }} height={64} src="/images/logo.jpg" />
+                    </Link>
                     <Menu
                         style={styles.menu}
                         mode="horizontal"

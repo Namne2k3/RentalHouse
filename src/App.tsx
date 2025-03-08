@@ -1,14 +1,19 @@
 import { Route, Routes } from 'react-router';
 import './App.css';
+import { useAppSelector } from './hooks/reduxHook.ts';
+import GeneralSettingLayout from './layouts/GeneralSettingLayout.tsx';
+import GeneralSettingPage from './pages/GeneralSettingPage/GeneralSettingPage.tsx';
 import HomePage from './pages/HomePage/HomePage.tsx';
 import LoginPage from './pages/LoginPage/LoginPage.tsx';
-import SignUpPage from './pages/SignUpPage/SignUpPage.tsx';
+import NewsPage from './pages/NewsPage/NewsPage.tsx';
 import ProfilePage from './pages/ProfilePage/ProfilePage.tsx';
 import RentalDetailPage from './pages/RentalDetailPage/RentalDetailPage.tsx';
 import RentalPage from './pages/RentalPage/RentalPage.tsx';
-import NewsPage from './pages/NewsPage/NewsPage.tsx';
+import RentalPostManagementPage from './pages/RentalPostManagementPage/RentalPostManagementPage.tsx';
+import SignUpPage from './pages/SignUpPage/SignUpPage.tsx';
 function App() {
 
+  const { generalPage } = useAppSelector((state) => state.generalSetting)
 
   return (
     <Routes>
@@ -33,6 +38,22 @@ function App() {
         <HomePage slider={false}>
           <RentalDetailPage />
         </HomePage>
+      } />
+      <Route path='/generalSetting' element={
+        <GeneralSettingLayout>
+          {
+            generalPage == "GeneralPage" &&
+            <GeneralSettingPage />
+          }
+          {
+            generalPage == "RentalPostManagementPage" &&
+            <RentalPostManagementPage />
+          }
+          {
+            generalPage == "ProfilePage" &&
+            <ProfilePage />
+          }
+        </GeneralSettingLayout>
       } />
     </Routes>
   )

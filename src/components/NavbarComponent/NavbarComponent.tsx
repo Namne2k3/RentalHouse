@@ -78,13 +78,13 @@ export default function App() {
         if (e.key == "logout") {
             dispatch(logout())
         } else {
-            navigate(`${e.key}`)
+            navigate(`/${e.key}`)
         }
     };
 
     const onMenuItemClick: MenuProps["onClick"] = (e) => {
         navigate(`/${e.key}`)
-        dispatch(setCurrentPage(e.key))
+        // dispatch(setCurrentPage(e.key))
     };
 
     const styles = {

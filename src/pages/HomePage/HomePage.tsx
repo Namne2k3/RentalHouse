@@ -1,12 +1,15 @@
 import { Layout } from "antd";
-import { Content, Footer, Header } from "antd/es/layout/layout";
+import { Content, Header } from "antd/es/layout/layout";
 import Sider from "antd/es/layout/Sider";
 import { ReactNode } from "react";
+import FooterComponent from "../../components/FooterComponent/FooterComponent";
 import NavbarComponent from "../../components/NavbarComponent/NavbarComponent";
-import Text from "../../components/TextComponent/Text";
 import { COLORS } from "../../constants/colors";
 import './styles.css';
-import FooterComponent from "../../components/FooterComponent/FooterComponent";
+import Text from "../../components/TextComponent/Text";
+import { fonts } from "../../constants/fonts";
+import PriceFilterComponent from "../../components/PriceFilterComponent/PriceFilterComponent";
+import AreaFilterComponent from "../../components/AreaFilterComponent/AreaFilterComponent";
 const headerStyle: React.CSSProperties = {
     textAlign: 'center',
     color: '#fff',
@@ -27,13 +30,14 @@ const contentStyle: React.CSSProperties = {
 };
 
 const siderStyle: React.CSSProperties = {
-    textAlign: 'center',
     backgroundColor: 'transparent',
     color: '#fff',
     margin: 16,
     marginLeft: 0,
     border: `1px solid ${COLORS.TAUPE}`,
-    borderRadius: 12
+    borderRadius: 12,
+    padding: "6px 12px",
+    height: 'fit-content' // Add this li
 };
 
 const footerStyle: React.CSSProperties = {
@@ -69,26 +73,21 @@ const HomePage = ({ children, slider = true, navbar = true }: HomePageProps) => 
             <Layout style={layoutStyle}>
                 <Layout>
                     <Content style={contentStyle}>
-                        {
-                            // (() => {
-                            //     switch (currentPage) {
-                            //         case "":
-                            //             return <RentalPage />;
-                            //         case "news":
-                            //             return <NewsPage />;
-                            //         case "profile":
-                            //             return <ProfilePage />;
-                            //         default:
-                            //             return <RentalPage />;
-                            //     }
-                            // })()
-                            children
-                        }
+                        {children}
                     </Content>
                     {
                         slider &&
-                        <Sider className="sider_layout" width="25%" style={siderStyle}>
-                            <Text text="Các tin tức nổi bật" />
+                        <Sider width="25%" style={siderStyle}>
+                            <div>
+                                <Text fontSize={16} fontFamily={fonts.medium} text="Lọc theo khoảng giá" />
+                                <div>
+                                    <PriceFilterComponent />
+                                </div>
+                            </div>
+                            <div>
+                                <Text fontSize={16} fontFamily={fonts.medium} text="Lọc theo diện tích" />
+                                <AreaFilterComponent />
+                            </div>
                         </Sider>
                     }
                 </Layout>

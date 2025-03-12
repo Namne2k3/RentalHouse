@@ -1,25 +1,60 @@
-import { LoadingOutlined } from "@ant-design/icons";
-import { Pagination, Spin } from "antd";
+import { LoadingOutlined, SmileOutlined } from "@ant-design/icons";
+import { Pagination, Spin, notification } from "antd";
 import { useCallback, useEffect } from "react";
 import RentalCardComponent from "../../components/RentalCardComponent/RentalCardComponent";
+import SearchComponent from "../../components/SearchComponent/SearchComponent";
 import Text from "../../components/TextComponent/Text";
 import { COLORS } from "../../constants/colors";
 import { useAppDispatch, useAppSelector } from "../../hooks";
 import { useRentals } from "../../hooks/rentalHook";
-import { savedRentalsSelector } from "../../store/selectors/savedRentalsSelector";
-import { addFavoriteLocally, addNhaTroToSaveList, removeFavoriteLocally } from "../../store/slices/favoriteSlice";
-import { setCurrentPagination } from "../../store/slices/pageSlice";
-import SearchComponent from "../../components/SearchComponent/SearchComponent";
 import { useUrlParams } from "../../hooks/urlsHook";
+import { addNhaTroToSaveList, removeFavoriteLocally } from "../../store/slices/favoriteSlice";
+import { setCurrentPagination } from "../../store/slices/pageSlice";
 import { searchRentals, setPriceRange } from "../../store/slices/searchSlice";
 
 const RentalPage = () => {
     const dispatch = useAppDispatch();
-    const savedRentals = useAppSelector(savedRentalsSelector);
+    const { savedRentalData } = useAppSelector((state) => state.favorite);
     const { search, priceRange, areaRange } = useAppSelector((state) => state.search)
     const { currentPagination, currentPageSize } = useAppSelector((state) => state.page);
     const { setFilterParams, getFilterParams } = useUrlParams();
+    const [api, contextHolder] = notification.useNotification();
 
+    const { data: rentals, isLoading, error } = useRentals({
+        page: currentPagination,
+        pageSize: currentPageSize,
+        address: search,
+        price1: priceRange[0],
+        price2: priceRange[1],
+        area1: areaRange[0],
+        area2: areaRange[1]
+    });
+
+    const openNotification = (message: string) => {
+        api.open({
+            message: message,
+            icon: <SmileOutlined style={{ color: '#108ee9' }} />,
+        });
+    };
+
+    const handleChangePagination = useCallback((number: number, pageSize: number) => {
+        dispatch(setCurrentPagination({ currentPagination: number, currentPageSize: pageSize }));
+    }, [dispatch]);
+
+    const handleAddNhaTroToSaveList = useCallback((nhaTroId: number) => {
+        // dispatch(addFavoriteLocally(nhaTroId));
+        dispatch(addNhaTroToSaveList({ id: nhaTroId }));
+        openNotification("Đã lưu thông tin nhà trọ")
+    }, [dispatch]);
+
+    const handleRemoveNhaTroFromSaveList = useCallback((nhaTroId: number) => {
+        dispatch(removeFavoriteLocally(nhaTroId));
+    }, [dispatch]);
+
+    const handleCopyPhoneNumber = useCallback((phoneNumber: string) => {
+        navigator.clipboard.writeText(phoneNumber)
+        alert("Đã sao chép số điện thoại: " + phoneNumber);
+    }, [])
     // khởi tạo các tham số filter từ URL
     useEffect(() => {
         const { search, price1, price2, page, pageSize } = getFilterParams()
@@ -43,34 +78,6 @@ const RentalPage = () => {
         });
     }, [search, priceRange, currentPagination, currentPageSize, areaRange]);
 
-    const { data: rentals, isLoading, error } = useRentals({
-        page: currentPagination,
-        pageSize: currentPageSize,
-        address: search,
-        price1: priceRange[0],
-        price2: priceRange[1],
-        area1: areaRange[0],
-        area2: areaRange[1]
-    });
-
-    const handleChangePagination = useCallback((number: number, pageSize: number) => {
-        dispatch(setCurrentPagination({ currentPagination: number, currentPageSize: pageSize }));
-    }, [dispatch]);
-
-    const handleAddNhaTroToSaveList = useCallback((nhaTroId: number) => {
-        dispatch(addFavoriteLocally(nhaTroId));
-        dispatch(addNhaTroToSaveList({ nhaTroId }));
-    }, [dispatch]);
-
-    const handleRemoveNhaTroFromSaveList = useCallback((nhaTroId: number) => {
-        dispatch(removeFavoriteLocally(nhaTroId));
-    }, [dispatch]);
-
-    const handleCopyPhoneNumber = useCallback((phoneNumber: string) => {
-        navigator.clipboard.writeText(phoneNumber)
-        alert("Đã sao chép số điện thoại: " + phoneNumber);
-    }, [])
-
     if (isLoading) {
         return (
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -89,6 +96,7 @@ const RentalPage = () => {
 
     return (
         <div>
+            {contextHolder}
             <SearchComponent />
             <div style={{
                 display: "flex",
@@ -112,16 +120,18 @@ const RentalPage = () => {
                 />
             </div>
             {
-                rentals?.data?.map((item) => (
-                    <RentalCardComponent
-                        key={item.id}
-                        rental={item}
-                        isSaved={savedRentals.includes(item.id)}
-                        handleCopyPhoneNumber={handleCopyPhoneNumber}
-                        onAddToSaveList={() => handleAddNhaTroToSaveList(item.id)}
-                        onRemoveFromSaveList={() => handleRemoveNhaTroFromSaveList(item.id)}
-                    />
-                ))
+                rentals?.data?.map((item) => {
+                    return (
+                        <RentalCardComponent
+                            key={item.id}
+                            rental={item}
+                            isSaved={savedRentalData.map(item => item.nhaTroId).includes(item.id)}
+                            handleCopyPhoneNumber={handleCopyPhoneNumber}
+                            onAddToSaveList={() => handleAddNhaTroToSaveList(item.id)}
+                            onRemoveFromSaveList={() => handleRemoveNhaTroFromSaveList(item.id)}
+                        />
+                    )
+                })
             }
             <div style={{ marginTop: 24 }}>
                 <Pagination align="center" pageSize={currentPageSize} onChange={handleChangePagination} defaultCurrent={currentPagination} total={rentals?.totalItems} />

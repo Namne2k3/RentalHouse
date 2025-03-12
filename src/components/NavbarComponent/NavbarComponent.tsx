@@ -1,6 +1,6 @@
-import { CaretDownOutlined, LoadingOutlined, LogoutOutlined, MenuOutlined, SettingOutlined, UserOutlined } from "@ant-design/icons";
+import { CaretDownOutlined, CloseOutlined, HeartOutlined, LoadingOutlined, LogoutOutlined, MenuOutlined, SettingOutlined, UserOutlined } from "@ant-design/icons";
 import type { MenuProps } from 'antd';
-import { Avatar, Button, Dropdown, Grid, Image, Menu, Space, Spin, theme } from "antd";
+import { Avatar, Badge, Button, Col, Divider, Dropdown, Empty, Grid, Image, Menu, Popover, Space, Spin, theme } from "antd";
 import { Link, useNavigate } from "react-router";
 import { COLORS } from "../../constants/colors";
 import { fonts } from "../../constants/fonts";
@@ -10,6 +10,7 @@ import { setCurrentPage } from "../../store/slices/pageSlice";
 import ButtonComponent from "../ButtonComponent/ButtonComponent";
 import Text from "../TextComponent/Text";
 
+import { Favorite, removeFavoriteLocally, removeNhaTroFromSaveList } from "../../store/slices/favoriteSlice";
 import './styles.css';
 
 const { useToken } = theme;
@@ -66,11 +67,58 @@ const menuItems = [
     // },
 ];
 
-export default function App() {
+const SavedRentalContainer = ({ savedRentalData }: { savedRentalData: Favorite[] }) => {
+
+    const dispatch = useAppDispatch()
+    const handleRemoveRentalFromSaveList = (id: number) => {
+        // console.log(id);
+        dispatch(removeFavoriteLocally(id))
+        dispatch(removeNhaTroFromSaveList({ id: id }))
+    }
+
+    return (
+        <div className="saved-rental-layout">
+            <Text text="Tin đăng đã lưu" fontFamily={fonts.bold} fontSize={16} />
+            <Divider style={{ margin: 0 }} />
+            <div className="saved-rental-container">
+                {
+                    savedRentalData?.length > 0 ?
+                        savedRentalData.map((item, index) => {
+                            return (
+                                <div className="saved-rental-item" style={{ display: "flex", justifyContent: "space-between", alignItems: 'center' }}>
+                                    <Link to={`/nhatro/detail/${item.nhaTro.id}`} key={index}>
+                                        <div style={{ marginBottom: 6 }}>
+                                            <div style={{ display: "flex" }}>
+                                                <div style={{ display: "flex", alignItems: 'center' }}>
+                                                    <img style={{ borderRadius: 8 }} width={64} height={48} src={item.nhaTro.images[0].imageUrl} />
+                                                </div>
+                                                <Col style={{ marginLeft: 12, maxWidth: 400 }}>
+                                                    <Text fontFamily={fonts.bold} text={item.nhaTro.title} />
+                                                    <Text fontFamily={fonts.regular} text={item.nhaTro.address} />
+                                                </Col>
+                                            </div>
+                                        </div>
+                                    </Link>
+                                    <div >
+                                        <CloseOutlined className="saved-rental-item-close-icon" onClick={() => handleRemoveRentalFromSaveList(item.id)} />
+                                    </div>
+                                </div>
+                            )
+                        })
+                        :
+                        <Empty description="Chưa có dữ liệu" />
+                }
+            </div>
+        </div>
+    )
+}
+
+const NavbarComponent = () => {
     const { token } = useToken();
     const screens = useBreakpoint();
     const navigate = useNavigate()
     const { currentPage } = useAppSelector((state) => state.page)
+    const { savedRentals, savedRentalData } = useAppSelector((state) => state.favorite)
     const { user, isLoading } = useAppSelector((state) => state.auth)
     const dispatch = useAppDispatch()
 
@@ -84,7 +132,7 @@ export default function App() {
 
     const onMenuItemClick: MenuProps["onClick"] = (e) => {
         navigate(`/${e.key}`)
-        // dispatch(setCurrentPage(e.key))
+        dispatch(setCurrentPage(e.key))
     };
 
     const styles = {
@@ -163,6 +211,32 @@ export default function App() {
                             </Space>
                             :
                             <Space align="center" size="small">
+                                <Badge
+                                    count={savedRentals?.length ?? 0}
+                                    offset={[-4, 3]} // Adjust badge position
+                                >
+                                    <Popover
+                                        content={<SavedRentalContainer savedRentalData={savedRentalData} />}
+                                        trigger="click"
+                                        placement="bottomRight"
+                                    >
+                                        <div style={{
+                                            display: "flex",
+                                            justifyContent: "center",
+                                            alignItems: "center",
+                                            marginRight: 8,
+                                            height: "100%"
+                                        }}>
+                                            <HeartOutlined
+                                                style={{
+                                                    color: COLORS.DARK_SLATE,
+                                                    fontSize: '24px',
+                                                    cursor: 'pointer'
+                                                }}
+                                            />
+                                        </div>
+                                    </Popover>
+                                </Badge>
                                 <Avatar
                                     style={{
                                         backgroundColor: COLORS.DARK_SLATE,
@@ -194,3 +268,5 @@ export default function App() {
         </nav>
     );
 }
+
+export default NavbarComponent

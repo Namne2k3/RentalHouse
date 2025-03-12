@@ -1,8 +1,20 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import api from "../../services/api";
+import { NhaTro } from "../../hooks/rentalHook";
+import { Response, User } from "../../types";
+
+export type Favorite = {
+    id: number,
+    userId: number,
+    user: User,
+    nhaTroId: number,
+    nhaTro: NhaTro,
+    dateSaved: Date
+}
 
 export interface FavoriteState {
     savedRentals: number[];
+    savedRentalData: Favorite[];
     error: string | null;
     message: string | null;
     isLoading: boolean;
@@ -10,6 +22,7 @@ export interface FavoriteState {
 
 const initialState: FavoriteState = {
     savedRentals: [],
+    savedRentalData: [],
     isLoading: false,
     error: null,
     message: null
@@ -19,13 +32,27 @@ type FavoriteRentalsResponse = {
     nhaTroId: number;
     isSuccess: boolean;
     message: string | null;
+    data: Favorite
 };
 
 export const fetchUserFavorites = createAsyncThunk(
     "favorite/getAllFavoritesByUserId",
     async (_, { rejectWithValue }) => {
         try {
-            const response = await api.get('/Favorite/GetFavoritesByCurrentUser');
+            const response = await api.get('/Favorite/GetFavoritesByCurrentUser', {
+                timeout: 5000,
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                maxContentLength: 50 * 1000 * 1000 // 50MB max
+            });
+
+            // Validate response data
+            if (!Array.isArray(response.data)) {
+                console.log("check res dataa >>> ", response.data);
+                throw new Error('Invalid response format');
+            }
             return response.data;
         } catch (error) {
             if (error && typeof error === 'object' && 'response' in error) {
@@ -38,7 +65,7 @@ export const fetchUserFavorites = createAsyncThunk(
 
 export const addNhaTroToSaveList = createAsyncThunk(
     "favorite/add",
-    async (credentials: { nhaTroId: number }, { rejectWithValue }) => {
+    async (credentials: { id: number }, { rejectWithValue }) => {
         try {
             const response = await api.post("/Favorite/AddFavorite", credentials);
             return response.data;
@@ -51,6 +78,21 @@ export const addNhaTroToSaveList = createAsyncThunk(
     }
 );
 
+export const removeNhaTroFromSaveList = createAsyncThunk(
+    "favorite/remove",
+    async (credentials: { id: number }, { rejectWithValue }) => {
+        try {
+            const response = await api.delete(`/Favorite/DeleteFavorite?id=${credentials.id}`)
+            return response.data;
+        } catch (error) {
+            if (error && typeof error === 'object' && 'response' in error) {
+                return rejectWithValue((error as { response: { data: unknown } }).response.data);
+            }
+            return rejectWithValue('Lỗi đã xảy ra!');
+        }
+    }
+)
+
 const favoriteSlice = createSlice({
     name: "favorite",
     initialState: initialState,
@@ -60,6 +102,7 @@ const favoriteSlice = createSlice({
         },
         removeFavoriteLocally: (state, action: PayloadAction<number>) => {
             state.savedRentals = state.savedRentals.filter(id => id !== action.payload);
+            state.savedRentalData = state.savedRentalData.filter(item => item.id != action.payload)
         }
     },
     extraReducers: (builder) => {
@@ -77,6 +120,7 @@ const favoriteSlice = createSlice({
                     state.isLoading = false;
                     state.message = action.payload.message;
                     state.savedRentals = [...state.savedRentals, action.payload.nhaTroId];
+                    state.savedRentalData = [...state.savedRentalData, action.payload.data]
                 }
             )
             .addCase(
@@ -86,6 +130,8 @@ const favoriteSlice = createSlice({
                     state.error = action.payload as string;
                 }
             )
+
+
             .addCase(
                 fetchUserFavorites.pending,
                 (state) => {
@@ -95,9 +141,10 @@ const favoriteSlice = createSlice({
             )
             .addCase(
                 fetchUserFavorites.fulfilled,
-                (state, action: PayloadAction<number[]>) => {
+                (state, action: PayloadAction<Favorite[]>) => {
                     state.isLoading = false;
-                    state.savedRentals = action.payload;
+                    state.savedRentals = action.payload.map(favorite => favorite.id);
+                    state.savedRentalData = action.payload;
                     state.error = null;
                 }
             )
@@ -107,7 +154,28 @@ const favoriteSlice = createSlice({
                     state.isLoading = false;
                     state.error = action.payload as string;
                 }
-            );
+            )
+
+            .addCase(
+                removeNhaTroFromSaveList.pending,
+                (state) => {
+                    state.isLoading = true;
+                }
+            )
+            .addCase(
+                removeNhaTroFromSaveList.fulfilled,
+                (state, action: PayloadAction<Response>) => {
+                    state.isLoading = false;
+                    state.message = action.payload.message
+                }
+            )
+            .addCase(
+                removeNhaTroFromSaveList.rejected,
+                (state, action) => {
+                    state.isLoading = false;
+                    state.error = action.payload as string;
+                }
+            )
     }
 });
 

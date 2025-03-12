@@ -13,3 +13,40 @@
 .header-wrapper {
     padding: 0 !important;
 }
+
+.saved-rental-layout {
+    background-color: #fff;
+}
+
+.saved-rental-container {
+    display: flex;
+    flex-direction: column;
+
+}
+
+.ant-space-item {
+    display: flex;
+}
+
+.ant-space-item .ant-badge {
+    margin-right: 8px;
+}
+
+.saved-rental-item-close-icon {
+    opacity: 0;
+    visibility: hidden;
+    width: 24px;
+    /* Fixed width */
+    height: 24px;
+    /* Fixed height */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.2s ease;
+    margin-left: 8px;
+}
+
+.saved-rental-item:hover .saved-rental-item-close-icon {
+    opacity: 1;
+    visibility: visible;
+}

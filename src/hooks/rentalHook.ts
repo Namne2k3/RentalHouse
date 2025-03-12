@@ -7,6 +7,11 @@ interface ResponseNhaTroInfo {
     data: NhaTro[]
 }
 
+interface Image {
+    id: number;
+    imageUrl: string
+}
+
 export interface NhaTro {
     id: number;
     title: string;
@@ -31,7 +36,7 @@ export interface NhaTro {
     priceVnd?: number;
     areaM2?: number;
     pricePerM2?: number;
-    imageUrls: string[];
+    images: Image[];
     userId: number;
     fullName: string,
     phoneNumber: string,

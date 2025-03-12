@@ -1,13 +1,14 @@
-import { HeartFilled, HeartOutlined, PhoneFilled, UserOutlined } from "@ant-design/icons";
-import { Avatar, Flex, Image, Space, Typography } from "antd";
+import { CheckCircleFilled, PhoneFilled, PlusCircleOutlined, UserOutlined } from "@ant-design/icons";
+import { Avatar, Button, Flex, Image, Space, Typography, notification } from "antd";
+import 'dayjs/locale/vi';
+import { useEffect, useState } from "react";
+import { Link } from "react-router";
 import { COLORS } from "../../constants/colors";
 import { fonts } from "../../constants/fonts";
 import { NhaTro } from "../../hooks/rentalHook";
+import { formatCurrencyVnd, formatPhoneNumber } from "../../utils";
 import Text from "../TextComponent/Text";
 import './styles.css';
-import 'dayjs/locale/vi';
-import { formatPhoneNumber, formatCurrencyVnd } from "../../utils";
-import { Link } from "react-router";
 
 const { Paragraph } = Typography;
 type Props = {
@@ -17,7 +18,21 @@ type Props = {
     isSaved: boolean,
     handleCopyPhoneNumber: (phoneNumber: string) => void
 }
-const RentalCardComponent = ({ rental, handleCopyPhoneNumber, onAddToSaveList, onRemoveFromSaveList, isSaved = false }: Props) => {
+const RentalCardComponent = ({ rental, handleCopyPhoneNumber, onAddToSaveList, onRemoveFromSaveList, isSaved }: Props) => {
+
+    const [isLoading, setIsLoading] = useState(false);
+
+    const handleAddToSaveList = (id: number) => {
+        setIsLoading(true)
+        onAddToSaveList(id)
+    }
+
+    useEffect(() => {
+        if (isSaved == true) {
+            setIsLoading(false)
+        }
+    }, [isSaved])
+
     return (
 
         <Flex
@@ -107,12 +122,12 @@ const RentalCardComponent = ({ rental, handleCopyPhoneNumber, onAddToSaveList, o
                         <PhoneFilled style={{ fontSize: 18 }} color="#fff" />
                         <Text style={{ margin: 0, padding: 0 }} fontFamily={fonts.bold} text={formatPhoneNumber(rental.phoneNumber)} color="#fff" />
                     </Flex>
-                    <Flex onClick={isSaved ? () => onRemoveFromSaveList(rental.id) : () => onAddToSaveList(rental.id)} align="center" style={{ cursor: "pointer", padding: 8, backgroundColor: COLORS.DARK_SLATE, borderRadius: 12 }}>
+                    <Flex onClick={() => handleAddToSaveList(rental.id)} align="center" style={{ cursor: "pointer", padding: 4, borderRadius: 12, backgroundColor: COLORS.DARK_SLATE }}>
                         {
                             isSaved ?
-                                <HeartFilled style={{ fontSize: 18, color: COLORS.TAUPE }} />
+                                <CheckCircleFilled style={{ fontSize: 28 }} />
                                 :
-                                <HeartOutlined style={{ fontSize: 18 }} />
+                                <Button loading={isLoading} style={{ backgroundColor: COLORS.DARK_SLATE, color: "#fff", border: "none" }} icon={<PlusCircleOutlined style={{ fontSize: 22 }} />} />
                         }
                     </Flex>
                 </Flex>

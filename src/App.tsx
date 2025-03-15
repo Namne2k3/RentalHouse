@@ -11,6 +11,7 @@ import RentalDetailPage from './pages/RentalDetailPage/RentalDetailPage.tsx';
 import RentalPage from './pages/RentalPage/RentalPage.tsx';
 import RentalPostManagementPage from './pages/RentalPostManagementPage/RentalPostManagementPage.tsx';
 import SignUpPage from './pages/SignUpPage/SignUpPage.tsx';
+import CreateNewRentalPostPage from './pages/CreateNewRentalPostPage/CreateNewRentalPostPage.tsx';
 function App() {
 
   const { generalPage } = useAppSelector((state) => state.generalSetting)
@@ -24,10 +25,15 @@ function App() {
       } />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/sign-up" element={<SignUpPage />} />
-      <Route path="/profile" element={
-        <HomePage>
-          <ProfilePage />
+      <Route path="/nhatro/create" element={
+        <HomePage slider={false}>
+          <CreateNewRentalPostPage />
         </HomePage>
+      } />
+      <Route path="/profile" element={
+        <GeneralSettingLayout>
+          <ProfilePage />
+        </GeneralSettingLayout>
       } />
       <Route path="/news" element={
         <HomePage>
@@ -46,7 +52,7 @@ function App() {
             <GeneralSettingPage />
           }
           {
-            generalPage == "RentalPostManagementPage" &&
+            generalPage == "ListRentalPage" &&
             <RentalPostManagementPage />
           }
           {

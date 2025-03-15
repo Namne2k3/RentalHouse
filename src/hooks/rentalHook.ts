@@ -28,6 +28,7 @@ export interface NhaTro {
     type?: string;
     code?: string;
     bedRoomCount?: string;
+    bathRoom?: number;
     furniture?: string;
     latitude?: number;
     longitude?: number;
@@ -57,7 +58,8 @@ interface RentalFilters {
     price1?: number,
     price2?: number,
     area1?: number,
-    area2?: number
+    area2?: number,
+    userId?: number
 }
 
 const fetchNhaTros = async (filters: RentalFilters): Promise<ResponseNhaTroInfo> => {

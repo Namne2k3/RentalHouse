@@ -7,6 +7,7 @@ import { useNavigate } from "react-router";
 import FooterComponent from "../components/FooterComponent/FooterComponent";
 import { useAppDispatch, useAppSelector } from "../hooks";
 import { setCurrentGeneralSettingPage } from "../store/slices/generalPageSlice";
+import { FaPeopleGroup } from "react-icons/fa6";
 
 type MenuItem = Required<MenuProps>['items'][number];
 
@@ -21,8 +22,7 @@ const items: MenuItem[] = [
         icon: <BookOutlined />,
         label: 'Quản lý đăng tin',
         children: [
-            { key: '21', label: 'Đăng mới' },
-            { key: '22', label: 'Danh sách tin' },
+            { key: 'ListRentalPage', label: 'Danh sách tin' },
             { key: '23', label: 'Option 3' },
             { key: '24', label: 'Option 4' },
         ],
@@ -31,6 +31,11 @@ const items: MenuItem[] = [
         key: 'ProfilePage',
         icon: <UserOutlined />,
         label: 'Quản lý tài khoản'
+    },
+    {
+        key: 'ProfilePage',
+        icon: <FaPeopleGroup />,
+        label: 'Quản lý khách hàng'
     },
 ]
 
@@ -57,31 +62,21 @@ const getLevelKeys = (items1: LevelKeysProps[]) => {
 
 const levelKeys = getLevelKeys(items as LevelKeysProps[]);
 
-// const componentMap: { [key: string]: React.ReactNode } = {
-//     'GeneralPage': <GeneralPage />,
-//     'RentalPostManagementPage': <RentalPostManagementPage />,
-//     'ProfilePage': <ProfilePage />,
-//     'CreateNewRentalPostPage': <CreateNewRentalPostPage />
-// };
-
 const GeneralSettingLayout = ({ children }: { children: ReactNode }) => {
 
     const [stateOpenKeys, setStateOpenKeys] = useState(['1']);
     const { generalPage } = useAppSelector((state) => state.generalSetting)
-    // const [selectedKey, setSelectedKey] = useState('1');
     const navigate = useNavigate()
     const dispatch = useAppDispatch()
 
     const handleMenuClick: MenuProps['onClick'] = (e) => {
-        // setSelectedKey(e.key);
-        // console.log(selectedKey);
+        console.log(e.key);
         dispatch(setCurrentGeneralSettingPage(e.key))
 
     };
 
     const onOpenChange: MenuProps['onOpenChange'] = (openKeys) => {
         const currentOpenKey = openKeys.find((key) => stateOpenKeys.indexOf(key) === -1);
-        // open
         if (currentOpenKey !== undefined) {
             const repeatIndex = openKeys
                 .filter((key) => key !== currentOpenKey)
@@ -89,13 +84,10 @@ const GeneralSettingLayout = ({ children }: { children: ReactNode }) => {
 
             setStateOpenKeys(
                 openKeys
-                    // remove repeat key
                     .filter((_, index) => index !== repeatIndex)
-                    // remove current level all child
                     .filter((key) => levelKeys[key] <= levelKeys[currentOpenKey]),
             );
         } else {
-            // close
             setStateOpenKeys(openKeys);
         }
     };
@@ -133,10 +125,8 @@ const GeneralSettingLayout = ({ children }: { children: ReactNode }) => {
                     flex: 1,
                     padding: '12px',
                     overflow: "auto",
-                    maxWidth: 600,
-                    margin: "24px auto",
-                    borderRadius: 12,
-                    border: "1px solid #ccc"
+                    // maxWidth: 600,
+                    borderRadius: 12
                 }}
                 >
                     {children}

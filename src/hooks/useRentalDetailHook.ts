@@ -3,7 +3,9 @@ import api from "../services/api";
 import { NhaTro } from "./rentalHook";
 
 const fetchDetailNhaTro = async (id: string): Promise<NhaTro> => {
-    const response = await api.get(`/NhaTro/GetNhaTroById?id=${id}`)
+    const response = await api.get(`/NhaTro/GetNhaTroById?id=${id}`, {
+        timeout: 3000
+    })
     return response.data
 }
 

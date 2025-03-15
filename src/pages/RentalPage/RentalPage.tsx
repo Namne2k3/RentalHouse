@@ -125,7 +125,7 @@ const RentalPage = () => {
                         <RentalCardComponent
                             key={item.id}
                             rental={item}
-                            isSaved={savedRentalData.map(item => item.nhaTroId).includes(item.id)}
+                            isSaved={savedRentalData.map(s => s.nhaTroId).includes(item.id)}
                             handleCopyPhoneNumber={handleCopyPhoneNumber}
                             onAddToSaveList={() => handleAddNhaTroToSaveList(item.id)}
                             onRemoveFromSaveList={() => handleRemoveNhaTroFromSaveList(item.id)}

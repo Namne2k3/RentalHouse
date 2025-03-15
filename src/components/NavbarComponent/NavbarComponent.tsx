@@ -46,25 +46,7 @@ const menuItems = [
     {
         label: "Tin tức",
         key: "news",
-    },
-    // {
-    //     label: "Products",
-    //     key: "SubMenu",
-    //     children: [
-    //         {
-    //             label: "Ant Design System",
-    //             key: "product:1",
-    //         },
-    //         {
-    //             label: "Ant Design Charts",
-    //             key: "product:2",
-    //         },
-    //     ],
-    // },
-    // {
-    //     label: "Settings",
-    //     key: "alipay",
-    // },
+    }
 ];
 
 const SavedRentalContainer = ({ savedRentalData }: { savedRentalData: Favorite[] }) => {
@@ -85,8 +67,8 @@ const SavedRentalContainer = ({ savedRentalData }: { savedRentalData: Favorite[]
                     savedRentalData?.length > 0 ?
                         savedRentalData.map((item, index) => {
                             return (
-                                <div className="saved-rental-item" style={{ display: "flex", justifyContent: "space-between", alignItems: 'center' }}>
-                                    <Link to={`/nhatro/detail/${item.nhaTro.id}`} key={index}>
+                                <div className="saved-rental-item" key={index} style={{ display: "flex", justifyContent: "space-between", alignItems: 'center' }}>
+                                    <Link to={`/nhatro/detail/${item.nhaTro.id}`}>
                                         <div style={{ marginBottom: 6 }}>
                                             <div style={{ display: "flex" }}>
                                                 <div style={{ display: "flex", alignItems: 'center' }}>
@@ -262,6 +244,13 @@ const NavbarComponent = () => {
                                         <CaretDownOutlined />
                                     </Space>
                                 </Dropdown>
+                                <Link
+                                    to={`/nhatro/create`}
+                                >
+                                    <Button style={{ padding: 16 }}>
+                                        <Text fontFamily={fonts.bold} text="Đăng tin" />
+                                    </Button>
+                                </Link>
                             </Space>
                 }
             </div>

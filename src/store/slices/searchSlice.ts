@@ -78,7 +78,6 @@ const searchSlice = createSlice({
                     state.error = "Lỗi khi tìm kiếm dữ liệu"
                 }
             )
-
     },
 })
 

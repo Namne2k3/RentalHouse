@@ -55,14 +55,12 @@ const RentalPage = () => {
         navigator.clipboard.writeText(phoneNumber)
         alert("Đã sao chép số điện thoại: " + phoneNumber);
     }, [])
-    // khởi tạo các tham số filter từ URL
+
     useEffect(() => {
         const { search, price1, price2, page, pageSize } = getFilterParams()
-
         if (search) dispatch(searchRentals({ search }));
         if (price1 && price2) dispatch(setPriceRange([price1, price2]));
         if (page) dispatch(setCurrentPagination({ currentPagination: page, currentPageSize: pageSize }));
-
     }, []);
 
     // cập nhật các biến filter từ URL nếu có thay đổi

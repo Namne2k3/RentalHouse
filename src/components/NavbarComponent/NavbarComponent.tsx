@@ -1,4 +1,4 @@
-import { CaretDownOutlined, CloseOutlined, HeartOutlined, LoadingOutlined, LogoutOutlined, MenuOutlined, SettingOutlined, UserOutlined } from "@ant-design/icons";
+import { BellOutlined, CaretDownOutlined, CloseOutlined, HeartOutlined, LoadingOutlined, LogoutOutlined, MenuOutlined, SettingOutlined, UserOutlined } from "@ant-design/icons";
 import type { MenuProps } from 'antd';
 import { Avatar, Badge, Button, Col, Divider, Dropdown, Empty, Grid, Image, Menu, Popover, Space, Spin, theme } from "antd";
 import { Link, useNavigate } from "react-router";
@@ -10,20 +10,22 @@ import { setCurrentPage } from "../../store/slices/pageSlice";
 import ButtonComponent from "../ButtonComponent/ButtonComponent";
 import Text from "../TextComponent/Text";
 
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Favorite, removeFavoriteLocally, removeNhaTroFromSaveList } from "../../store/slices/favoriteSlice";
 import './styles.css';
+import { AppointmentDTO, fetchAppointmentsCustomer } from "../../hooks/appointmentHook";
 
 const { useToken } = theme;
 const { useBreakpoint } = Grid;
 
 const userMenuItems: MenuProps['items'] = [
     {
-        key: 'generalSetting',
+        key: 'GeneralPage',
         label: 'Tổng quan',
         icon: <SettingOutlined />
     },
     {
-        key: 'profile',
+        key: 'ProfilePage',
         label: 'Thông tin cá nhân',
         icon: <UserOutlined />
     },
@@ -95,6 +97,34 @@ const SavedRentalContainer = ({ savedRentalData }: { savedRentalData: Favorite[]
     )
 }
 
+const NotificationContainer = ({ appointments }: { appointments: AppointmentDTO[] }) => {
+    return (
+        <div className="saved-rental-layout">
+            <Text text="Thông báo" fontFamily={fonts.bold} fontSize={16} />
+            <Divider style={{ margin: 0 }} />
+            <div className="saved-rental-container">
+                {
+                    appointments.length > 0
+                        ?
+                        appointments.map((item, index) => {
+                            console.log(item);
+
+                            return (
+                                <Link key={index} to={"/generalSetting/CustomerAppointmentManagementPage"} style={{ padding: 12, borderRadius: 12, backgroundColor: "#f5f5f5", marginTop: 12 }}>
+                                    <Text text={`Bạn vừa có một lịch hẹn mới từ khách hàng`} />
+                                    <Text text={item.fullName} fontFamily={fonts.bold} />
+                                </Link>
+                            )
+                        })
+                        :
+                        <Empty description="Chưa có dữ liệu" />
+                }
+            </div>
+        </div>
+    )
+}
+
+
 const NavbarComponent = () => {
     const { token } = useToken();
     const screens = useBreakpoint();
@@ -103,12 +133,21 @@ const NavbarComponent = () => {
     const { savedRentals, savedRentalData } = useAppSelector((state) => state.favorite)
     const { user, isLoading } = useAppSelector((state) => state.auth)
     const dispatch = useAppDispatch()
+    const queryClient = useQueryClient();
+
+    const { data: appointments } = useQuery({
+        queryKey: ["appointments"],
+        queryFn: () => fetchAppointmentsCustomer({}), // API lấy danh sách lịch hẹn
+        refetchInterval: 15000, // 15 giây gọi lại API
+    });
+
 
     const handleMenuProfileClick: MenuProps['onClick'] = (e) => {
         if (e.key == "logout") {
+            queryClient.clear()
             dispatch(logout())
         } else {
-            navigate(`/${e.key}`)
+            navigate(`/generalSetting/${e.key}`)
         }
     };
 
@@ -193,6 +232,32 @@ const NavbarComponent = () => {
                             </Space>
                             :
                             <Space align="center" size="small">
+                                <Badge
+                                    count={appointments?.length ?? 0}
+                                    offset={[-4, 3]} // Adjust badge position
+                                >
+                                    <Popover
+                                        content={<NotificationContainer appointments={appointments ?? []} />}
+                                        trigger="click"
+                                        placement="bottomRight"
+                                    >
+                                        <div style={{
+                                            display: "flex",
+                                            justifyContent: "center",
+                                            alignItems: "center",
+                                            marginRight: 8,
+                                            height: "100%"
+                                        }}>
+                                            <BellOutlined
+                                                style={{
+                                                    color: COLORS.DARK_SLATE,
+                                                    fontSize: '24px',
+                                                    cursor: 'pointer'
+                                                }}
+                                            />
+                                        </div>
+                                    </Popover>
+                                </Badge>
                                 <Badge
                                     count={savedRentals?.length ?? 0}
                                     offset={[-4, 3]} // Adjust badge position

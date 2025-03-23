@@ -77,7 +77,7 @@ const HomePage = ({ children, slider = true, navbar = true }: HomePageProps) => 
                     </Content>
                     {
                         slider &&
-                        <Sider width="25%" style={siderStyle}>
+                        <Sider className="slider-section-rental-page" width="25%" style={siderStyle}>
                             <div>
                                 <Text fontSize={16} fontFamily={fonts.medium} text="Lọc theo khoảng giá" />
                                 <div>

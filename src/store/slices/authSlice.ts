@@ -1,8 +1,8 @@
-import { createAsyncThunk, createNextState, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { USER_TOKEN_NAME } from "../../constants/url";
 import api from "../../services/api";
 import { AuthState, Response } from "../../types";
 import { removeCookie, setCookie } from "../../utils";
-import { USER_TOKEN_NAME } from "../../constants/url";
 
 export const getCurrentUser = createAsyncThunk(
     "auth/getCurrentUser",

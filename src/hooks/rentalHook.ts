@@ -41,7 +41,9 @@ export interface NhaTro {
     userId: number;
     fullName: string,
     phoneNumber: string,
-    email: string
+    email: string,
+    rejectionReason: string,
+    status: number
 }
 
 interface RentalFilters {
@@ -69,6 +71,12 @@ const fetchNhaTros = async (filters: RentalFilters): Promise<ResponseNhaTroInfo>
     return response.data;
 };
 
+const fetchNhaTrosByUserId = async (filters: RentalFilters): Promise<ResponseNhaTroInfo> => {
+    const response = await api.get(`/NhaTro/GetAllNhaTrosByUserId/${filters.userId}`, {
+        params: filters
+    });
+    return response.data;
+};
 export const useRentals = (filters: RentalFilters = {}) => {
     return useQuery({
         queryKey: ['rentals', filters],
@@ -81,3 +89,16 @@ export const useRentals = (filters: RentalFilters = {}) => {
         gcTime: 1000 * 60 * 5
     });
 };
+
+export const useRentalsByUserId = (filters: RentalFilters = {}) => {
+    return useQuery({
+        queryKey: ['rentals', filters],
+        queryFn: () => fetchNhaTrosByUserId(filters),
+        staleTime: Infinity,
+        refetchOnMount: false,
+        refetchOnWindowFocus: false,
+        retry: 2,
+        retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+        gcTime: 1000 * 60 * 5
+    });
+}

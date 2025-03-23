@@ -1,6 +1,6 @@
 import { BookOutlined, CheckCircleFilled, DollarCircleOutlined, HeartOutlined, HomeOutlined, LoadingOutlined, PhoneOutlined, ShareAltOutlined, SmileOutlined, UserOutlined, WarningOutlined } from "@ant-design/icons"
 import { AntdIconProps } from "@ant-design/icons/lib/components/AntdIcon"
-import { Avatar, Button, Carousel, Col, DatePicker, Divider, Empty, Modal, Popconfirm, Row, Spin, TimePicker, notification } from "antd"
+import { Avatar, Button, Carousel, Col, DatePicker, Divider, Empty, Modal, Popconfirm, Row, Spin, notification, Form, Input, Select, Upload, message } from "antd"
 import L from 'leaflet'
 import markerIconUrl from 'leaflet/dist/images/marker-icon.png'
 import markerShadowUrl from 'leaflet/dist/images/marker-shadow.png'
@@ -19,11 +19,42 @@ import { fonts } from "../../constants/fonts"
 import { useAppDispatch, useAppSelector } from "../../hooks"
 import { useRelatedRentals } from "../../hooks/useRelatedRentalHook"
 import { useRentalDetail } from "../../hooks/useRentalDetailHook"
+import api from '../../services/api'
 import { addNhaTroToSaveList, removeNhaTroFromSaveList } from "../../store/slices/favoriteSlice"
 import { formatCurrencyVnd } from "../../utils"
 import './styles.css'
 import zalo_icon from '/icons/zalo_icon.png'
-import dayjs from "dayjs"
+import { UploadOutlined } from '@ant-design/icons';
+import type { UploadFile } from 'antd/es/upload/interface';
+
+const REPORT_TYPES = [
+    { label: 'Nhà trọ', value: 'NhaTro' },
+    { label: 'Chủ nhà', value: 'ChuNha' },
+    { label: 'Thanh toán', value: 'ThanhToan' },
+];
+
+interface Report {
+    id: number;
+    reportType: string;
+    description: string;
+    evidenceUrls?: string[];
+    status: number;
+    createdAt: string;
+    userId: number;
+    nhaTroId: number;
+}
+
+interface CreateReportDto {
+    reportType: string;
+    description: string;
+    evidenceFiles?: File[];
+    nhaTroId: number;
+}
+
+interface UpdateReportDto {
+    status: number;
+    response?: string;
+}
 
 const customIcon = L.icon({
     iconUrl: markerIconUrl,
@@ -75,16 +106,83 @@ const RentalDetailPage = () => {
     const { data: rental, isLoading, error } = useRentalDetail(id?.toString() || "");
     const { data: relatedRentals } = useRelatedRentals(id?.toString() || "")
     const { savedRentalData } = useAppSelector(state => state.favorite)
-    const [api, contextHolder] = notification.useNotification();
+    const [notificationApi, contextHolder] = notification.useNotification();
     const dispatch = useAppDispatch()
     const [openModal, setOpenModal] = useState(false)
+    const [timeBooking, setTimeBooking] = useState<Date | null>(null);
+    const [isReportModalVisible, setIsReportModalVisible] = useState(false);
+    const [reportForm] = Form.useForm();
+    const [fileList, setFileList] = useState<UploadFile[]>([]);
+
+    // Add validation for file upload
+    const beforeUpload = (file: RcFile) => {
+        const isImage = file.type.startsWith('image/');
+        const isLt2M = file.size / 1024 / 1024 < 2;
+
+        if (!isImage) {
+            message.error('Chỉ được upload file ảnh!');
+            return false;
+        }
+
+        if (!isLt2M) {
+            message.error('Ảnh phải nhỏ hơn 2MB!');
+            return false;
+        }
+
+        return false; // Return false to prevent auto upload
+    };
+
+    const handleReportSubmit = async (values: any) => {
+        try {
+            const formData = new FormData();
+
+            // Append basic data directly to FormData
+            formData.append('reportType', values.reportType);
+            formData.append('description', values.description);
+            formData.append('nhaTroId', id!);
+
+            // Append files if any
+            if (fileList.length > 0) {
+                fileList.forEach((file: UploadFile) => {
+                    if (file.originFileObj) {
+                        formData.append('evidenceFiles', file.originFileObj);
+                    }
+                });
+            }
+
+            // Send request to backend
+            const response = await api.post('/Report', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                }
+            });
+
+            if (response.data.isSuccess) {
+                notification.success({
+                    message: 'Gửi báo cáo thành công',
+                    description: 'Báo cáo của bạn đã được gửi và sẽ được xử lý sớm nhất'
+                });
+
+                setIsReportModalVisible(false);
+                reportForm.resetFields();
+                setFileList([]);
+            }
+        } catch (error: any) {
+            notification.error({
+                message: 'Lỗi',
+                description: error.response?.data?.message || 'Có lỗi xảy ra khi gửi báo cáo'
+            });
+            console.error('Report submission error:', error);
+        }
+    };
+
 
     const showModal = () => {
         setOpenModal(true)
     }
 
     const openNotification = (message: string) => {
-        api.open({
+        notificationApi.open({
             message: message,
             icon: <SmileOutlined style={{ color: '#108ee9' }} />,
         });
@@ -114,10 +212,28 @@ const RentalDetailPage = () => {
         }
     };
 
-    const handleSubmitBooking = () => {
-        console.log('booking');
+    const handleSubmitBooking = async () => {
+        if (!timeBooking) {
+            notificationApi.error({ message: "Vui lòng chọn thời gian đặt lịch!" });
+            return;
+        }
 
-    }
+        try {
+            const response = await api.post('/Appointment', {
+                nhaTroId: Number(id),
+                appointmentTime: new Date(timeBooking.toISOString())
+            });
+
+
+            if (response.data.isSuccess) {
+                notificationApi.success({ message: response.data.message });
+                setOpenModal(false);
+            }
+        } catch (err) {
+            notificationApi.error({ message: "Lỗi khi đặt lịch. Vui lòng thử lại!" + err });
+        }
+    };
+
 
     if (error) {
         console.log(error);
@@ -165,9 +281,82 @@ const RentalDetailPage = () => {
                                                 </Col>
                                             </div>
                                             <div className="rental-price-area-actions">
-                                                <Button color="blue" className="rental-detail-action-btn" size="large" icon={<ShareAltOutlined />}>Chia sẻ</Button>
-                                                <Button className="rental-detail-action-btn" size="large" icon={<WarningOutlined />}>Báo cáo</Button>
+                                                {/* <Button color="blue" className="rental-detail-action-btn" size="large" icon={<ShareAltOutlined />}>Chia sẻ</Button> */}
+                                                <Button
+                                                    className="rental-detail-action-btn"
+                                                    size="large"
+                                                    icon={<WarningOutlined />}
+                                                    onClick={() => setIsReportModalVisible(true)}
+                                                >
+                                                    Báo cáo
+                                                </Button>
+                                                <Modal
+                                                    title="Báo cáo vi phạm"
+                                                    open={isReportModalVisible}
+                                                    onCancel={() => {
+                                                        setIsReportModalVisible(false);
+                                                        reportForm.resetFields();
+                                                        setFileList([]);
+                                                    }}
+                                                    onOk={() => reportForm.submit()}
+                                                    okText="Gửi báo cáo"
+                                                    cancelText="Hủy"
+                                                >
+                                                    <Form
+                                                        form={reportForm}
+                                                        layout="vertical"
+                                                        onFinish={handleReportSubmit}
+                                                    >
+                                                        <Form.Item
+                                                            name="reportType"
+                                                            label="Loại báo cáo"
+                                                            rules={[{ required: true, message: 'Vui lòng chọn loại báo cáo' }]}
+                                                        >
+                                                            <Select
+                                                                placeholder="Chọn loại báo cáo"
+                                                                options={REPORT_TYPES}
+                                                            />
+                                                        </Form.Item>
 
+                                                        <Form.Item
+                                                            name="description"
+                                                            label="Mô tả chi tiết"
+                                                            rules={[{ required: true, message: 'Vui lòng nhập mô tả' }]}
+                                                        >
+                                                            <Input.TextArea
+                                                                rows={4}
+                                                                placeholder="Nhập mô tả chi tiết về vấn đề bạn gặp phải..."
+                                                            />
+                                                        </Form.Item>
+
+                                                        <Form.Item
+                                                            label="Hình ảnh bằng chứng"
+                                                            name="evidenceFiles"
+                                                        >
+                                                            <Upload
+                                                                listType="picture-card"
+                                                                fileList={fileList}
+                                                                beforeUpload={beforeUpload}
+                                                                onChange={({ fileList }) => setFileList(fileList)}
+                                                                onRemove={(file) => {
+                                                                    setFileList(prev => prev.filter(item => item !== file));
+                                                                }}
+                                                                multiple
+                                                                maxCount={5}
+                                                            >
+                                                                {fileList.length >= 5 ? null : (
+                                                                    <div>
+                                                                        <UploadOutlined />
+                                                                        <div style={{ marginTop: 8 }}>Tải ảnh</div>
+                                                                    </div>
+                                                                )}
+                                                            </Upload>
+                                                            <div style={{ color: '#666' }}>
+                                                                Tối đa 5 ảnh, mỗi ảnh không quá 2MB
+                                                            </div>
+                                                        </Form.Item>
+                                                    </Form>
+                                                </Modal>
                                                 {
                                                     savedRentalData.map(item => item.nhaTroId).includes(Number(id))
                                                         ?
@@ -336,8 +525,7 @@ const RentalDetailPage = () => {
 
                                 <Text fontSize={16} fontFamily={fonts.bold} text="Ngày hẹn" />
                                 <Row style={{ gap: 8, marginTop: 12 }}>
-                                    <DatePicker style={{ flex: 1, borderColor: COLORS.DARK_SLATE }} onChange={(date) => console.log(dayjs(date).format("DD/MM/YYYY"))} />
-                                    <TimePicker style={{ flex: 1, borderColor: COLORS.DARK_SLATE }} onChange={(time) => console.log(`${dayjs(time).hour()}:${dayjs(time).minute()}`)} />
+                                    <DatePicker showTime style={{ flex: 1, borderColor: COLORS.DARK_SLATE }} onChange={(date) => setTimeBooking(date?.toDate() || null)} />
                                 </Row>
                             </div>
 

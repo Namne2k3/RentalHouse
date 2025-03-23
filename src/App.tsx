@@ -1,7 +1,8 @@
-import { Route, Routes } from 'react-router';
+import { Route, Routes, useParams, Navigate, useNavigate } from 'react-router';
 import './App.css';
-import { useAppSelector } from './hooks/reduxHook.ts';
 import GeneralSettingLayout from './layouts/GeneralSettingLayout.tsx';
+import CreateNewRentalPostPage from './pages/CreateNewRentalPostPage/CreateNewRentalPostPage.tsx';
+import CustomerAppointmentManagementPage from './pages/CustomerAppointmentManagementPage/CustomerAppointmentManagementPage.tsx';
 import GeneralSettingPage from './pages/GeneralSettingPage/GeneralSettingPage.tsx';
 import HomePage from './pages/HomePage/HomePage.tsx';
 import LoginPage from './pages/LoginPage/LoginPage.tsx';
@@ -11,13 +12,65 @@ import RentalDetailPage from './pages/RentalDetailPage/RentalDetailPage.tsx';
 import RentalPage from './pages/RentalPage/RentalPage.tsx';
 import RentalPostManagementPage from './pages/RentalPostManagementPage/RentalPostManagementPage.tsx';
 import SignUpPage from './pages/SignUpPage/SignUpPage.tsx';
-import CreateNewRentalPostPage from './pages/CreateNewRentalPostPage/CreateNewRentalPostPage.tsx';
-function App() {
+import UserAppointmentManagementPage from './pages/UserAppointmentManagementPage/UserAppointmentManagementPage.tsx';
+import { useAppSelector } from './hooks/reduxHook.ts';
+import AdminPanel from './pages/Admin/index.tsx';
+import { Button, Result } from 'antd';
 
-  const { generalPage } = useAppSelector((state) => state.generalSetting)
+
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user } = useAppSelector((state) => state.auth);
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <>{children}</>;
+};
+
+const AdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, isLoading } = useAppSelector((state) => state.auth);
+  const navigate = useNavigate()
+
+  if (!isLoading) {
+    if (!user || user?.role !== 'Admin') {
+      return <Result
+        status="403"
+        title="403"
+        subTitle="Xin lỗi, bạn không có quyền truy cập vào trang hiện tại."
+        extra={<Button onClick={() => navigate("/")} type="primary">Trở lại trang chủ</Button>}
+      />
+    }
+  }
+
+  return <>{children}</>;
+};
+
+function GeneralSettingRouter() {
+  const { generalPage } = useParams(); // Lấy giá trị từ URL
 
   return (
+    <GeneralSettingLayout>
+      {generalPage === "GeneralPage" && <GeneralSettingPage />}
+      {generalPage === "ListRentalPage" && <RentalPostManagementPage />}
+      {generalPage === "ProfilePage" && <ProfilePage />}
+      {generalPage === "UserAppointmentManagementPage" && <UserAppointmentManagementPage />}
+      {generalPage === "CustomerAppointmentManagementPage" && <CustomerAppointmentManagementPage />}
+    </GeneralSettingLayout>
+  );
+}
+
+
+function App() {
+  return (
     <Routes>
+      {/* Admin Routes */}
+      <Route path="/admin" element={
+        <AdminRoute>
+          <AdminPanel />
+        </AdminRoute>
+      } />
+      {/* Public Routes */}
       <Route path='/' element={
         <HomePage>
           <RentalPage />
@@ -25,16 +78,6 @@ function App() {
       } />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/sign-up" element={<SignUpPage />} />
-      <Route path="/nhatro/create" element={
-        <HomePage slider={false}>
-          <CreateNewRentalPostPage />
-        </HomePage>
-      } />
-      <Route path="/profile" element={
-        <GeneralSettingLayout>
-          <ProfilePage />
-        </GeneralSettingLayout>
-      } />
       <Route path="/news" element={
         <HomePage>
           <NewsPage />
@@ -45,24 +88,31 @@ function App() {
           <RentalDetailPage />
         </HomePage>
       } />
-      <Route path='/generalSetting' element={
-        <GeneralSettingLayout>
-          {
-            generalPage == "GeneralPage" &&
-            <GeneralSettingPage />
-          }
-          {
-            generalPage == "ListRentalPage" &&
-            <RentalPostManagementPage />
-          }
-          {
-            generalPage == "ProfilePage" &&
+
+      {/* Protected Routes (Requires Authentication) */}
+      <Route path="/profile" element={
+        <ProtectedRoute>
+          <GeneralSettingLayout>
             <ProfilePage />
-          }
-        </GeneralSettingLayout>
+          </GeneralSettingLayout>
+        </ProtectedRoute>
       } />
+
+      <Route path="/nhatro/create" element={
+        <HomePage slider={false}>
+          <CreateNewRentalPostPage />
+        </HomePage>
+      } />
+      <Route path="/generalSetting/:generalPage" element={
+        <AdminRoute>
+          <GeneralSettingRouter />
+        </AdminRoute>
+      } />
+
+      {/* Catch all route - 404 */}
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
-  )
+  );
 }
 
-export default App
+export default App;

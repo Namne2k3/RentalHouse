@@ -17,7 +17,7 @@ const headerStyle: React.CSSProperties = {
     height: '64px', // Thêm chiều cao cố định
     backgroundColor: 'transparent',
     overflow: 'hidden', // Ngăn content tràn ra ngoài
-    maxWidth: 1000,
+    maxWidth: 1400,
     margin: 'auto'
     // border: '1px solid #000'
 };
@@ -50,7 +50,7 @@ const layoutStyle = {
     borderRadius: 8,
     overflow: 'hidden',
     margin: '12px auto',
-    maxWidth: 1000,
+    maxWidth: 1400,
     // border: '1px solid #000'
 };
 

@@ -5,6 +5,9 @@ import moment from "moment";
 import { useState } from "react";
 import { useAppointmentsCustomer } from "../../hooks/appointmentHook";
 import api from "../../services/api";
+import { AppointmentHistoryDto } from "../../types/appointment";
+import { useAppSelector } from "../../hooks";
+
 
 const { Option } = Select;
 const statusTable = {
@@ -13,6 +16,7 @@ const statusTable = {
     "Cancelled": "Đã hủy"
 }
 const CustomerAppointmentManagementPage = () => {
+    const { user } = useAppSelector((state) => state.auth);
     const { data: appointments, isLoading, error } = useAppointmentsCustomer();
     const [messageApi, contextHolder] = message.useMessage();
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -43,22 +47,27 @@ const CustomerAppointmentManagementPage = () => {
 
     const handleStatusChange = async (appointmentId: number, newStatus: string) => {
         try {
-            const response = await api.put(`/Appointment/${appointmentId}`, newStatus)
+            const appointmentHistory: AppointmentHistoryDto = {
+                id: appointmentId,
+                status: newStatus,
+                notes: newStatus === "Confirmed" ? "Đã xác nhận lịch hẹn" : "Đã hủy lịch hẹn",
+                changedBy: user?.id?.toString() || "",
+                createdAt: new Date().toISOString()
+            };
 
-            // nếu request thành công
-            // ta sẽ cập nhật trực tiếp dữ liệu appointments trong React Query Cache bằng setQueryData()
-            // trạng thái của component thay đổi ngay trên UI mà không cần gọi API Fetch lại
+            const response = await api.put(`/Appointment/${appointmentId}`, appointmentHistory);
+
             if (response.status === 200) {
-                if (newStatus == "Confirmed") {
-                    messageApi.success("Đã duyệt lịch hẹn", 2)
+                if (newStatus === "Confirmed") {
+                    messageApi.success("Đã duyệt lịch hẹn", 2);
                 } else {
-                    messageApi.success("Đã hủy lịch hẹn", 2)
+                    messageApi.success("Đã hủy lịch hẹn", 2);
                 }
-                queryClient.invalidateQueries(['appointments']);
+                queryClient.invalidateQueries({ queryKey: ['appointments'] });
             }
-
         } catch (error) {
             console.error(error);
+            messageApi.error("Có lỗi xảy ra khi cập nhật trạng thái", 2);
         }
     };
 
@@ -68,13 +77,15 @@ const CustomerAppointmentManagementPage = () => {
         && (filterDate ? moment(appt.createdAt).isSame(filterDate, 'day') : true)
     );
 
+    console.log("Check appointments >>> ", appointments)
+
     const columns = [
         { title: "Mã số", dataIndex: "id", key: "id" },
-        { title: "Khách hàng", dataIndex: "fullName", key: "fullName" },
+        { title: "Khách hàng", dataIndex: "userName", key: "userName" },
         { title: "SĐT", dataIndex: "phoneNumber", key: "phoneNumber" },
         { title: "Email", dataIndex: "email", key: "email" },
         { title: "Địa chỉ", dataIndex: "address", key: "address" },
-        { title: "Tiêu đề", dataIndex: "title", key: "title" },
+        // { title: "Tiêu đề", dataIndex: "title", key: "title" },
         {
             title: "Ngày tạo", dataIndex: "createdAt", key: "createdAt",
             render: (date: string) => {

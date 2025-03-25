@@ -17,12 +17,15 @@ import { useAppSelector } from './hooks/reduxHook.ts';
 import AdminPanel from './pages/Admin/index.tsx';
 import { Button, Result } from 'antd';
 
-
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user } = useAppSelector((state) => state.auth);
+  const { user, isLoading } = useAppSelector((state) => state.auth);
 
-  if (!user) {
-    return <Navigate to="/login" replace />;
+  if (isLoading) {
+    return null
+  } else {
+    if (!user) {
+      return <Navigate to="/login" replace />;
+    }
   }
 
   return <>{children}</>;
@@ -41,25 +44,28 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
         extra={<Button onClick={() => navigate("/")} type="primary">Trở lại trang chủ</Button>}
       />
     }
+  } else {
+    return null
   }
 
   return <>{children}</>;
 };
 
 function GeneralSettingRouter() {
-  const { generalPage } = useParams(); // Lấy giá trị từ URL
+  const { generalPage } = useParams();
 
   return (
-    <GeneralSettingLayout>
-      {generalPage === "GeneralPage" && <GeneralSettingPage />}
-      {generalPage === "ListRentalPage" && <RentalPostManagementPage />}
-      {generalPage === "ProfilePage" && <ProfilePage />}
-      {generalPage === "UserAppointmentManagementPage" && <UserAppointmentManagementPage />}
-      {generalPage === "CustomerAppointmentManagementPage" && <CustomerAppointmentManagementPage />}
-    </GeneralSettingLayout>
+    <HomePage slider={false}>
+      <GeneralSettingLayout>
+        {generalPage === "GeneralPage" && <GeneralSettingPage />}
+        {generalPage === "ListRentalPage" && <RentalPostManagementPage />}
+        {generalPage === "ProfilePage" && <ProfilePage />}
+        {generalPage === "UserAppointmentManagementPage" && <UserAppointmentManagementPage />}
+        {generalPage === "CustomerAppointmentManagementPage" && <CustomerAppointmentManagementPage />}
+      </GeneralSettingLayout>
+    </HomePage>
   );
 }
-
 
 function App() {
   return (
@@ -104,9 +110,7 @@ function App() {
         </HomePage>
       } />
       <Route path="/generalSetting/:generalPage" element={
-        <AdminRoute>
-          <GeneralSettingRouter />
-        </AdminRoute>
+        <GeneralSettingRouter />
       } />
 
       {/* Catch all route - 404 */}

@@ -138,7 +138,12 @@ const NavbarComponent = () => {
     const { data: appointments } = useQuery({
         queryKey: ["appointments"],
         queryFn: () => fetchAppointmentsCustomer({}), // API lấy danh sách lịch hẹn
-        refetchInterval: 15000, // 15 giây gọi lại API
+        staleTime: Infinity,
+        refetchOnMount: false,
+        refetchOnWindowFocus: false,
+        retry: 1,
+        retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+        gcTime: 1000 * 60 * 5
     });
 
 
@@ -146,6 +151,7 @@ const NavbarComponent = () => {
         if (e.key == "logout") {
             queryClient.clear()
             dispatch(logout())
+            navigate("/login")
         } else {
             navigate(`/generalSetting/${e.key}`)
         }

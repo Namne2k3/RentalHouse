@@ -1,112 +1,87 @@
 import { SearchOutlined } from "@ant-design/icons";
 import { useQueryClient } from "@tanstack/react-query";
-import { Button, DatePicker, Empty, Form, Input, Modal, Popover, Row, Select, Space, Spin, Table, Tag, message } from "antd";
+import { Button, DatePicker, Empty, Form, Input, Modal, Select, Space, Spin, Table, Tag, message } from "antd";
+import type { Dayjs } from "dayjs";
 import moment from "moment";
 import { useState } from "react";
 import { useAppointmentsUser } from "../../hooks/appointmentHook";
 import api from "../../services/api";
+import { AppointmentHistoryDto } from "../../types/appointment";
 
 const { Option } = Select;
 const statusTable = {
     "Pending": "Chờ xác nhận",
     "Confirmed": "Đã xác nhận",
     "Cancelled": "Đã hủy"
-}
+} as const;
+
+type StatusType = keyof typeof statusTable;
+
 const UserAppointmentManagementPage = () => {
-    const { data: appointments, isLoading, error } = useAppointmentsUser();
+    const { data: appointments, isLoading } = useAppointmentsUser();
     const [messageApi, contextHolder] = message.useMessage();
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [editingAppointment, setEditingAppointment] = useState(null);
     const [form] = Form.useForm();
     const [searchText, setSearchText] = useState("");
-    const [filterStatus, setFilterStatus] = useState("");
-    const [filterDate, setFilterDate] = useState(null);
-    const queryClient = useQueryClient()
-    const handleOk = () => {
-        // form.validateFields().then((values) => {
-        //     const updatedAppointments = editingAppointment
-        //         ? appointments.map((appt) =>
-        //             appt.userId === editingAppointment.userId ? { ...appt, ...values, createdAt: values.createdAt.format("YYYY-MM-DD") } : appt
-        //         )
-        //         : [...appointments, { userId: Date.now(), ...values, createdAt: values.createdAt.format("YYYY-MM-DD"), updatedAt: null }];
+    const [filterStatus, setFilterStatus] = useState<StatusType | "">("");
+    const [filterDate, setFilterDate] = useState<Dayjs | null>(null);
+    const queryClient = useQueryClient();
 
-        //     setAppointments(updatedAppointments);
-        //     setIsModalOpen(false);
-        //     setEditingAppointment(null);
-        //     form.resetFields();
-        // });
-    };
-
-    const handleDelete = (userId) => {
-        // setAppointments(appointments.filter((appt) => appt.userId !== userId));
-    };
-
-    const handleStatusChange = async (appointmentId: number, newStatus: string) => {
+    const handleDelete = async (appointmentId: number) => {
         try {
-            const response = await api.put(`/Appointment/${appointmentId}`, newStatus)
+            const appointmentHistory: AppointmentHistoryDto = {
+                id: appointmentId,
+                status: "Cancelled",
+                notes: "Người dùng đã hủy lịch hẹn",
+                changedBy: "1", // TODO: Replace with actual user ID from auth context
+                createdAt: new Date().toISOString()
+            };
 
-            // nếu request thành công
-            // ta sẽ cập nhật trực tiếp dữ liệu appointments trong React Query Cache bằng setQueryData()
-            // trạng thái của component thay đổi ngay trên UI mà không cần gọi API Fetch lại
+            const response = await api.put(`/Appointment/${appointmentId}`, appointmentHistory);
             if (response.status === 200) {
-                if (newStatus == "Confirmed") {
-                    messageApi.success("Đã duyệt lịch hẹn", 2)
-                } else {
-                    messageApi.success("Đã hủy lịch hẹn", 2)
-                }
-                queryClient.invalidateQueries(['appointments']);
+                messageApi.success("Đã hủy lịch hẹn", 2);
+                queryClient.invalidateQueries({ queryKey: ['appointments'] });
             }
-
         } catch (error) {
             console.error(error);
+            messageApi.error("Có lỗi xảy ra khi hủy lịch hẹn", 2);
         }
     };
 
     const filteredAppointments = appointments?.filter(appt =>
         (searchText ? appt.fullName.toLowerCase().includes(searchText.toLowerCase()) || appt.title.toLowerCase().includes(searchText.toLowerCase()) : true)
         && (filterStatus ? appt.status === filterStatus : true)
-        && (filterDate ? moment(appt.createdAt).isSame(filterDate, 'day') : true)
+        && (filterDate ? moment(appt.createAt).isSame(filterDate.toDate(), 'day') : true)
     );
 
     const columns = [
         { title: "Mã số", dataIndex: "id", key: "id" },
-        { title: "Khách hàng", dataIndex: "fullName", key: "fullName" },
+        { title: "Khách hàng", dataIndex: "userName", key: "userName" },
         { title: "SĐT", dataIndex: "phoneNumber", key: "phoneNumber" },
         { title: "Email", dataIndex: "email", key: "email" },
         { title: "Địa chỉ", dataIndex: "address", key: "address" },
-        { title: "Tiêu đề", dataIndex: "title", key: "title" },
         {
-            title: "Ngày tạo", dataIndex: "createdAt", key: "createdAt",
+            title: "Ngày tạo", dataIndex: "createAt", key: "createAt",
             render: (date: string) => {
                 return <p>{new Date(date).toLocaleString("vi-VN")}</p>
             }
         },
         {
             title: "Trạng thái", dataIndex: "status", key: "status",
-            render: (status) => {
+            render: (status: StatusType) => {
                 const color = status === "Pending" ? "orange" : status === "Confirmed" ? "green" : "red";
                 return <Tag color={color}>{statusTable[status]}</Tag>;
             }
         },
         {
             title: "Cập nhật", dataIndex: "updatedAt", key: "updatedAt",
-            render: (date) => date ? moment(date).format("YYYY-MM-DD") : "-"
+            render: (date: string | null) => date ? moment(date).format("YYYY-MM-DD") : "-"
         },
         {
             title: "Hành động", key: "action",
-            render: (_, record) => (
+            render: (_: unknown, record: { id: number }) => (
                 <Space>
-                    {/* <Popover
-                        content={
-                            <Row style={{ gap: 8 }}>
-                                <Button onClick={() => handleStatusChange(record.id, "Confirmed")}>Duyệt</Button>
-                                <Button onClick={() => handleStatusChange(record.id, "Cancelled")}>Hủy</Button>
-                            </Row>
-                        }
-                    >
-                        <Button>Xác nhận</Button>
-                    </Popover> */}
-                    <Button danger onClick={() => handleDelete(record.userId)}>Xóa</Button>
+                    <Button danger onClick={() => handleDelete(record.id)}>Hủy lịch hẹn</Button>
                 </Space>
             )
         }
@@ -118,7 +93,7 @@ const UserAppointmentManagementPage = () => {
                 isLoading ?
                     <Spin />
                     :
-                    appointments?.length == 0
+                    appointments?.length === 0
                         ?
                         <Empty />
                         :
@@ -133,9 +108,8 @@ const UserAppointmentManagementPage = () => {
                                     <Option value="Cancelled">Đã hủy</Option>
                                 </Select>
                             </Space>
-                            <Table columns={columns} dataSource={filteredAppointments} rowKey="userId" />
-                            {/* <Button type="primary" onClick={() => setIsModalOpen(true)}>Thêm lịch hẹn</Button> */}
-                            <Modal title={editingAppointment ? "Chỉnh sửa lịch hẹn" : "Thêm lịch hẹn"} open={isModalOpen} onOk={handleOk} onCancel={() => setIsModalOpen(false)}>
+                            <Table columns={columns} dataSource={filteredAppointments} rowKey="id" />
+                            <Modal title="Thêm lịch hẹn" open={isModalOpen} onOk={() => setIsModalOpen(false)} onCancel={() => setIsModalOpen(false)}>
                                 <Form form={form} layout="vertical">
                                     <Form.Item name="fullName" label="Tên khách hàng" rules={[{ required: true, message: "Vui lòng nhập tên khách hàng" }]}>
                                         <Input />
@@ -152,7 +126,7 @@ const UserAppointmentManagementPage = () => {
                                     <Form.Item name="title" label="Tiêu đề" rules={[{ required: true, message: "Vui lòng nhập tiêu đề" }]}>
                                         <Input />
                                     </Form.Item>
-                                    <Form.Item name="createdAt" label="Ngày tạo" rules={[{ required: true, message: "Vui lòng chọn ngày" }]}>
+                                    <Form.Item name="createAt" label="Ngày tạo" rules={[{ required: true, message: "Vui lòng chọn ngày" }]}>
                                         <DatePicker format="YYYY-MM-DD" style={{ width: "100%" }} />
                                     </Form.Item>
                                 </Form>

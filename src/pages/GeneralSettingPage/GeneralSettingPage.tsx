@@ -31,11 +31,11 @@ const GeneralSettingPage = () => {
         //     label: 'Lịch hẹn với khách hàng',
         //     children: <OwnerAppointment />,
         // },
-        {
-            key: '5',
-            label: 'Hoạt động tài khoản',
-            children: <AccountActivity />,
-        },
+        // {
+        //     key: '5',
+        //     label: 'Hoạt động tài khoản',
+        //     children: <AccountActivity />,
+        // },
     ];
 
     return (

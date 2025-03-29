@@ -45,10 +45,10 @@ const menuItems = [
         label: "Thuê phòng trọ",
         key: "",
     },
-    {
-        label: "Tin tức",
-        key: "news",
-    }
+    // {
+    //     label: "Tin tức",
+    //     key: "news",
+    // }
 ];
 
 const SavedRentalContainer = ({ savedRentalData }: { savedRentalData: Favorite[] }) => {

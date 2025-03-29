@@ -1,8 +1,7 @@
 import {
     Button, Space, Table, Tag, Modal, message, Input, Spin, Typography,
     notification, Tooltip, Badge, Drawer, Descriptions, Image,
-    Form, Switch, Divider,
-    InputNumber, Upload
+    Form, Switch, Divider, Select, InputNumber, Upload
 } from 'antd';
 import './style.css'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -53,7 +52,12 @@ const NhaTroManagementPage = () => {
     const [editForm] = Form.useForm();
     const [modal, contextHolerModal] = Modal.useModal();
     const [filteredInfo, setFilteredInfo] = useState<Record<string, any>>({});
-
+    const [filterStatus, setFilterStatus] = useState<number | null>(null);
+    const [filterIsActive, setFilterIsActive] = useState<boolean | null>(null);
+    const [searchTitle, setSearchTitle] = useState<string>('');
+    const [filterPriceRange, setFilterPriceRange] = useState<[number, number] | null>(null);
+    const [filterAreaRange, setFilterAreaRange] = useState<[number, number] | null>(null);
+    const [messageApi, messageApiContextHolder] = message.useMessage()
     const { data: nhaTros, isLoading } = useQuery({
         queryKey: ['nhaTros', currentPagination, currentPageSize],
         queryFn: async () => {
@@ -65,8 +69,14 @@ const NhaTroManagementPage = () => {
                 }
             });
             return response.data;
-        }
+        },
+        staleTime: 5 * 60 * 1000,
+        gcTime: 1000 * 60 * 5,
+        refetchOnWindowFocus: false,
+        retry: 2,
     });
+
+    const [filteredData, setFilteredData] = useState<typeof nhaTros | null>(null);
 
     const handleTableChange = (pagination: any, filters: any) => {
         setFilteredInfo(filters);
@@ -102,13 +112,13 @@ const NhaTroManagementPage = () => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['nhaTros'] });
-            message.success('Cập nhật thành công');
+            messageApi.success('Cập nhật thành công');
             setIsEditModalVisible(false);
             setNewImages([]);
             setEditingImages([]);
         },
         onError: () => {
-            message.error('Có lỗi xảy ra khi cập nhật');
+            messageApi.error('Có lỗi xảy ra khi cập nhật');
         }
     });
 
@@ -126,7 +136,7 @@ const NhaTroManagementPage = () => {
                 icon: <SmileOutlined style={{ color: '#108ee9' }} />
             });
         },
-        onError: () => message.error('Có lỗi xảy ra khi cập nhật trạng thái')
+        onError: () => messageApi.error('Có lỗi xảy ra khi cập nhật trạng thái')
     });
 
     const handleChangePagination = (page: number, pageSize: number) => {
@@ -182,7 +192,7 @@ const NhaTroManagementPage = () => {
             ),
             onOk: () => {
                 if (!rejectReason) {
-                    message.error('Vui lòng nhập lý do từ chối');
+                    messageApi.error('Vui lòng nhập lý do từ chối');
                     return;
                 }
                 updateStatus.mutate({
@@ -207,9 +217,9 @@ const NhaTroManagementPage = () => {
                 try {
                     await api.delete(`/NhaTro/${id}`);
                     queryClient.invalidateQueries({ queryKey: ['nhaTros'] });
-                    message.success('Xóa bài đăng thành công');
+                    messageApi.success('Xóa bài đăng thành công');
                 } catch (error) {
-                    message.error('Có lỗi xảy ra khi xóa bài đăng' + error);
+                    messageApi.error('Có lỗi xảy ra khi xóa bài đăng' + error);
                 }
             },
         });
@@ -238,6 +248,63 @@ const NhaTroManagementPage = () => {
                 handleUpdateStatus(record.id, checked);
             }
         });
+    };
+
+    const handleApproveStatus = (id: number, newStatus: number, reason?: string) => {
+        modal.confirm({
+            title: newStatus === 1 ? 'Xác nhận duyệt bài đăng' : 'Xác nhận từ chối bài đăng',
+            content: newStatus === 2 ? (
+                <div>
+                    <p>Vui lòng nhập lý do từ chối:</p>
+                    <Input.TextArea
+                        rows={4}
+                        value={reason}
+                        onChange={(e) => setRejectReason(e.target.value)}
+                    />
+                </div>
+            ) : 'Bạn có chắc chắn muốn duyệt bài đăng này?',
+            onOk: async () => {
+                if (newStatus === 2 && !rejectReason) {
+                    messageApi.error('Vui lòng nhập lý do từ chối');
+                    return;
+                }
+                try {
+                    // Log thông tin để backend xử lý sau
+                    console.log('Cập nhật trạng thái:', {
+                        id,
+                        newStatus,
+                        reason: rejectReason
+                    });
+                    messageApi.success('Cập nhật trạng thái thành công');
+                    setRejectReason('');
+                } catch (error) {
+                    messageApi.error('Có lỗi xảy ra khi cập nhật trạng thái');
+                }
+            }
+        });
+    };
+
+    const handleSearch = async () => {
+        try {
+            const response = await api.get('/NhaTro/search', {
+                params: {
+                    title: searchTitle,
+                    status: filterStatus,
+                    isActive: filterIsActive,
+                    minPrice: filterPriceRange?.[0],
+                    maxPrice: filterPriceRange?.[1],
+                    minArea: filterAreaRange?.[0],
+                    maxArea: filterAreaRange?.[1],
+                    page: currentPagination,
+                    pageSize: currentPageSize
+                }
+            });
+
+            setFilteredData(response.data);
+        } catch (error) {
+            messageApi.error('Có lỗi xảy ra khi tìm kiếm');
+            setFilteredData(null);
+        }
     };
 
     const columns = [
@@ -305,15 +372,62 @@ const NhaTroManagementPage = () => {
                 />
             ),
         },
+        {
+            title: 'Trạng thái duyệt',
+            dataIndex: 'status',
+            key: 'status',
+            width: 150,
+            render: (status: number, record: NhaTro) => {
+                let color = 'default';
+                let text = 'Chờ duyệt';
+
+                if (status === 1) {
+                    color = 'success';
+                    text = 'Đã duyệt';
+                } else if (status === 2) {
+                    color = 'error';
+                    text = 'Đã từ chối';
+                }
+
+                return (
+                    <Space direction="vertical">
+                        <Tag color={color}>{text}</Tag>
+                        {status === 0 && (
+                            <Space>
+                                <Button
+                                    type="primary"
+                                    size="small"
+                                    onClick={() => handleApproveStatus(record.id, 1)}
+                                >
+                                    Duyệt
+                                </Button>
+                                <Button
+                                    danger
+                                    size="small"
+                                    onClick={() => handleApproveStatus(record.id, 2)}
+                                >
+                                    Từ chối
+                                </Button>
+                            </Space>
+                        )}
+                    </Space>
+                );
+            },
+            filters: [
+                { text: 'Chờ duyệt', value: 0 },
+                { text: 'Đã duyệt', value: 1 },
+                { text: 'Đã từ chối', value: 2 },
+            ],
+        },
     ];
 
     const handleUpdateStatus = async (id: number, isActive: boolean) => {
         try {
             await api.put(`/NhaTro/UpdateActive/${id}`, isActive);
             queryClient.invalidateQueries({ queryKey: ['nhaTros'] });
-            message.success('Cập nhật trạng thái thành công');
+            messageApi.success('Cập nhật trạng thái thành công');
         } catch (error) {
-            message.error('Có lỗi xảy ra khi cập nhật trạng thái ' + error);
+            messageApi.error('Có lỗi xảy ra khi cập nhật trạng thái ' + error);
         }
     };
 
@@ -321,18 +435,87 @@ const NhaTroManagementPage = () => {
         <>
             {contextHolder}
             {contextHolerModal}
+            {messageApiContextHolder}
             <div>
-                <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    {/* <Title level={3}>Quản lý nhà trọ</Title> */}
-                    {/* <Search
-                        placeholder="Tìm kiếm theo tiêu đề"
-                        enterButton
-                        style={{ width: 300 }}
-                        onClick={() => {
-                            dispatch(searchRentals({ search }))
-                            queryClient.invalidateQueries({ queryKey: ['nhaTros'] });
-                        }}
-                    /> */}
+                <div style={{ marginBottom: 16, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    <Input
+                        placeholder="Tìm kiếm theo tiêu đề..."
+                        style={{ width: 200 }}
+                        value={searchTitle}
+                        onChange={(e) => setSearchTitle(e.target.value)}
+                    />
+
+                    <Select
+                        style={{ width: 150 }}
+                        placeholder="Trạng thái duyệt"
+                        allowClear
+                        value={filterStatus}
+                        onChange={setFilterStatus}
+                    >
+                        <Select.Option value={0}>Chờ duyệt</Select.Option>
+                        <Select.Option value={1}>Đã duyệt</Select.Option>
+                        <Select.Option value={2}>Đã từ chối</Select.Option>
+                    </Select>
+
+                    <Select
+                        style={{ width: 150 }}
+                        placeholder="Trạng thái hiển thị"
+                        allowClear
+                        value={filterIsActive}
+                        onChange={setFilterIsActive}
+                    >
+                        <Select.Option value={true}>Đang hiển thị</Select.Option>
+                        <Select.Option value={false}>Đã ẩn</Select.Option>
+                    </Select>
+
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                        <span>Giá:</span>
+                        <InputNumber
+                            style={{ width: 120 }}
+                            placeholder="Từ"
+                            formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                            parser={value => value!.replace(/\$\s?|(,*)/g, '')}
+                            onChange={(value) => setFilterPriceRange(prev => [value || 0, prev?.[1] || 0])}
+                        />
+                        <span>-</span>
+                        <InputNumber
+                            style={{ width: 120 }}
+                            placeholder="Đến"
+                            formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                            parser={value => value!.replace(/\$\s?|(,*)/g, '')}
+                            onChange={(value) => setFilterPriceRange(prev => [prev?.[0] || 0, value || 0])}
+                        />
+                    </div>
+
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                        <span>Diện tích:</span>
+                        <InputNumber
+                            style={{ width: 100 }}
+                            placeholder="Từ"
+                            onChange={(value) => setFilterAreaRange(prev => [value || 0, prev?.[1] || 0])}
+                        />
+                        <span>-</span>
+                        <InputNumber
+                            style={{ width: 100 }}
+                            placeholder="Đến"
+                            onChange={(value) => setFilterAreaRange(prev => [prev?.[0] || 0, value || 0])}
+                        />
+                        <span>m²</span>
+                    </div>
+
+                    <Button type="primary" onClick={handleSearch}>
+                        Tìm kiếm
+                    </Button>
+
+                    <Button onClick={() => {
+                        setSearchTitle('');
+                        setFilterStatus(null);
+                        setFilterIsActive(null);
+                        setFilterPriceRange(null);
+                        setFilterAreaRange(null);
+                    }}>
+                        Đặt lại
+                    </Button>
                 </div>
 
                 {isLoading ? (
@@ -343,14 +526,14 @@ const NhaTroManagementPage = () => {
                     <>
                         <Table
                             columns={columns}
-                            dataSource={nhaTros?.data}
+                            dataSource={(filteredData || nhaTros)?.data}
                             loading={isLoading}
                             rowKey="id"
                             onChange={handleTableChange}
                             pagination={{
                                 current: currentPagination,
                                 pageSize: currentPageSize,
-                                total: nhaTros?.totalItems,
+                                total: (filteredData || nhaTros)?.totalItems,
                                 showSizeChanger: true,
                                 showTotal: (total) => `Tổng số ${total} bài đăng`,
                             }}

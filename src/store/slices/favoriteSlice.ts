@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import api from "../../services/api";
-import { NhaTro } from "../../hooks/rentalHook";
+import { NhaTro } from "../../hooks/useRentalHook";
 import { Response, User } from "../../types";
 
 export type Favorite = {

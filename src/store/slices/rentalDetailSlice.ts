@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { NhaTro } from "../../hooks/rentalHook";
+import { NhaTro } from "../../hooks/useRentalHook";
 import api from "../../services/api";
 
 interface RentalDetailState {

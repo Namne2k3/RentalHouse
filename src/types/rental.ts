@@ -3,6 +3,7 @@ export interface RentalViewStats {
     title: string;
     viewCount: number;
     postedDate: string;
+    expiredDate: string;
     status: string;
 }
 

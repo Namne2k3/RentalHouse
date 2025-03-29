@@ -1,7 +1,7 @@
 import {
     Button, Space, Table, Tag, Modal, message, Input, Spin, Typography,
     notification, Tooltip, Badge, Drawer, Descriptions, Image,
-    Form,
+    Form, Switch, Divider,
     InputNumber, Upload
 } from 'antd';
 import './style.css'
@@ -35,6 +35,7 @@ interface NhaTro {
     rejectionReason?: string;
     approvedDate?: string;
     imageUrls: string[];
+    isActive: boolean;
 }
 
 const NhaTroManagementPage = () => {
@@ -147,6 +148,7 @@ const NhaTroManagementPage = () => {
             address: record.address,
             price: record.price,
             description: record.description,
+            isActive: record.isActive,
         });
         setEditingImages(record.imageUrls);
         setIsEditModalVisible(true);
@@ -213,11 +215,36 @@ const NhaTroManagementPage = () => {
         });
     };
 
+    const handleSubmit = (values: any) => {
+        console.log('Form values:', values);
+        console.log('New images:', newImages);
+        console.log('Existing images:', editingImages);
+
+        // Continue with the existing update logic
+        updateNhaTro.mutate(values);
+    };
+
+
+
+    const handleStatusChange = (record: NhaTro, checked: boolean) => {
+        modal.confirm({
+            title: 'Xác nhận thay đổi trạng thái',
+            content: `Bạn có chắc chắn muốn ${checked ? 'kích hoạt' : 'vô hiệu hóa'} nhà trọ này?`,
+            okText: 'Xác nhận',
+            cancelText: 'Hủy',
+            onOk: () => {
+                console.log('ID nhà trọ:', record.id);
+                console.log('Trạng thái mới:', checked);
+                handleUpdateStatus(record.id, checked);
+            }
+        });
+    };
+
     const columns = [
         {
             title: 'Thao tác',
             key: 'action',
-            width: 200,
+            width: 120,
             render: (_: unknown, record: NhaTro) => (
                 <Space size="small">
                     <Tooltip title="Xem chi tiết">
@@ -228,142 +255,75 @@ const NhaTroManagementPage = () => {
                             onClick={() => showDetail(record)}
                         />
                     </Tooltip>
-
-                    {record.status === 0 && (
-                        <>
-                            <Tooltip title="Duyệt bài">
-                                <Button
-                                    type="primary"
-                                    icon={<CheckOutlined />}
-                                    onClick={() => handleApprove(record.id)}
-                                />
-                            </Tooltip>
-                            <Tooltip title="Từ chối">
-                                <Button
-                                    danger
-                                    icon={<CloseOutlined />}
-                                    onClick={() => handleReject(record.id)}
-                                />
-                            </Tooltip>
-                        </>
-                    )}
-
-                    <Tooltip title="Chỉnh sửa">
-                        <Button
-                            type="default"
-                            icon={<EditOutlined />}
-                            onClick={() => handleEdit(record)}
-                        />
-                    </Tooltip>
-
-                    {/* <Tooltip title="Xóa">
-                        <Button
-                            danger
-                            type="primary"
-                            icon={<DeleteOutlined />}
-                            onClick={() => handleDelete(record.id)}
-                        />
-                    </Tooltip> */}
                 </Space>
             ),
-        },
-        {
-            title: 'Trạng thái',
-            dataIndex: 'status',
-            key: 'status',
-            render: (status: number, record: NhaTro) => {
-                const colors: Record<number, string> = {
-                    0: 'warning',
-                    1: 'success',
-                    2: 'error'
-                };
-                const labels: Record<number, string> = {
-                    0: 'Chưa duyệt',
-                    1: 'Đã duyệt',
-                    2: 'Đã từ chối'
-                };
-                return (
-                    <Tooltip title={record.rejectionReason && `Lý do từ chối: ${record.rejectionReason}`}>
-                        <Tag color={colors[status]}>{labels[status]}</Tag>
-                        {/* <Badge status={colors[status]} text={labels[status]} /> */}
-                    </Tooltip>
-                );
-            },
-            filters: [
-                { text: 'Chưa duyệt', value: 0 },
-                { text: 'Đã duyệt', value: 1 },
-                { text: 'Từ chối', value: 2 },
-            ],
-            onFilter: (value: number, record: NhaTro) => record.status === value,
-        },
-        {
-            title: 'Ngày đăng',
-            dataIndex: 'postedDate',
-            key: 'postedDate',
-            render: (date: string) => new Date(date).toLocaleDateString('vi-VN'),
         },
         {
             title: 'ID',
             dataIndex: 'id',
             key: 'id',
-            filterMode: 'menu',
-            filteredValue: filteredInfo.id || null,
-            filterSearch: true,
-            filters: nhaTros?.data?.map(item => ({
-                text: item.id,
-                value: item.id,
-            })) || [],
-            onFilter: (value: number, record: NhaTro) => record.id === value,
-            sorter: (a: NhaTro, b: NhaTro) => a.id - b.id,
-        },
-        {
-            title: 'Ảnh',
-            key: 'image',
-            width: 150,
-            render: (_: unknown, record: NhaTro) => (
-                <img
-                    src={record.imageUrls[0]}
-                    alt="Ảnh"
-                    style={{ width: 80, height: 50, objectFit: 'cover' }}
-                />
-            ),
-        },
-        {
-            title: 'Tiêu đề',
-            dataIndex: 'title',
-            key: 'title',
+            width: 80,
         },
         {
             title: 'Địa chỉ',
             dataIndex: 'address',
             key: 'address',
+            width: 300,
+            ellipsis: true,
         },
         {
-            title: 'Giá',
-            dataIndex: 'price',
-            key: 'price',
-            render: (price: number) => price?.toLocaleString('vi-VN') + ' VNĐ',
+            title: 'Diện tích (m²)',
+            dataIndex: 'area',
+            key: 'area',
+            width: 120,
         },
         {
-            title: 'Người đăng',
-            dataIndex: 'user',
-            key: 'user',
-            render: (_: unknown, record: NhaTro) => (
-                <div>
-                    <div>{record.fullName}</div>
-                    <div>{record.email}</div>
-                </div>
+            title: 'Ngày đăng',
+            dataIndex: 'postedDate',
+            key: 'postedDate',
+            width: 120,
+            render: (date: string) => new Date(date).toLocaleDateString('vi-VN'),
+        },
+        {
+            title: 'Ngày hết hạn',
+            dataIndex: 'expiredDate',
+            key: 'expiredDate',
+            width: 120,
+            render: (date: string) => new Date(date).toLocaleDateString('vi-VN'),
+        },
+        {
+            title: 'Trạng thái',
+            dataIndex: 'isActive',
+            key: 'isActive',
+            width: 120,
+            render: (isActive: boolean, record: NhaTro) => (
+                <Switch
+                    checked={isActive}
+                    onChange={(checked) => handleStatusChange(record, checked)}
+                    checkedChildren="Hoạt động"
+                    unCheckedChildren="Vô hiệu"
+                />
             ),
-        }
+        },
     ];
+
+    const handleUpdateStatus = async (id: number, isActive: boolean) => {
+        try {
+            await api.put(`/NhaTro/UpdateActive/${id}`, isActive);
+            queryClient.invalidateQueries({ queryKey: ['nhaTros'] });
+            message.success('Cập nhật trạng thái thành công');
+        } catch (error) {
+            message.error('Có lỗi xảy ra khi cập nhật trạng thái ' + error);
+        }
+    };
 
     return (
         <>
             {contextHolder}
             {contextHolerModal}
-            <div style={{ padding: '24px' }}>
+            <div>
                 <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Title level={3}>Quản lý nhà trọ</Title>
+                    {/* <Title level={3}>Quản lý nhà trọ</Title> */}
                     {/* <Search
                         placeholder="Tìm kiếm theo tiêu đề"
                         enterButton
@@ -397,42 +357,68 @@ const NhaTroManagementPage = () => {
                             scroll={{ x: 'max-content' }}
                             bordered
                         />
-                        <Drawer
+                        <Modal
                             title="Chi tiết bài đăng"
-                            placement="right"
-                            width={640}
-                            onClose={() => setDetailVisible(false)}
                             open={detailVisible}
+                            onCancel={() => setDetailVisible(false)}
+                            width={800}
+                            footer={null}
                         >
                             {selectedNhaTro && (
                                 <>
                                     <Descriptions bordered column={1}>
                                         <Descriptions.Item label="Tiêu đề">{selectedNhaTro.title}</Descriptions.Item>
                                         <Descriptions.Item label="Địa chỉ">{selectedNhaTro.address}</Descriptions.Item>
-                                        <Descriptions.Item label="Giá">
-                                            {selectedNhaTro.price?.toLocaleString('vi-VN')} VNĐ
+                                        <Descriptions.Item label="Giá thuê">
+                                            {selectedNhaTro.price?.toLocaleString('vi-VN')} VNĐ/tháng
                                         </Descriptions.Item>
-                                        <Descriptions.Item label="Mô tả">
-                                            {selectedNhaTro.description}
+                                        <Descriptions.Item label="Diện tích">
+                                            {selectedNhaTro.area} m²
                                         </Descriptions.Item>
-                                        <Descriptions.Item label="Người đăng">
-                                            {selectedNhaTro.fullName} ({selectedNhaTro.email})
+                                        <Descriptions.Item label="Số phòng ngủ">
+                                            {selectedNhaTro.bedRoomCount || 'Không có thông tin'}
                                         </Descriptions.Item>
-                                        {selectedNhaTro.status === 0 && (
-                                            <Descriptions.Item label="Lý do từ chối" className="text-red-500">
-                                                {selectedNhaTro.rejectionReason}
-                                            </Descriptions.Item>
-                                        )}
+                                        <Descriptions.Item label="Số phòng tắm">
+                                            {selectedNhaTro.bathRoom || 'Không có thông tin'}
+                                        </Descriptions.Item>
+                                        <Descriptions.Item label="Ngày đăng">
+                                            {new Date(selectedNhaTro.postedDate).toLocaleDateString('vi-VN')}
+                                        </Descriptions.Item>
+                                        <Descriptions.Item label="Ngày hết hạn">
+                                            {new Date(selectedNhaTro.expiredDate).toLocaleDateString('vi-VN')}
+                                        </Descriptions.Item>
+                                        <Descriptions.Item label="Trạng thái">
+                                            <Tag color={selectedNhaTro.isActive ? 'green' : 'red'}>
+                                                {selectedNhaTro.isActive ? 'Đang hoạt động' : 'Vô hiệu'}
+                                            </Tag>
+                                        </Descriptions.Item>
+                                        <Descriptions.Item label="Liên kết">
+                                            <a href={selectedNhaTro.url} target="_blank" rel="noopener noreferrer">
+                                                Xem trên website
+                                            </a>
+                                        </Descriptions.Item>
                                     </Descriptions>
 
+                                    <Divider orientation="left">Thông tin người đăng</Divider>
+                                    <Descriptions bordered column={1}>
+                                        <Descriptions.Item label="Họ tên">{selectedNhaTro.fullName}</Descriptions.Item>
+                                        <Descriptions.Item label="Số điện thoại">{selectedNhaTro.phoneNumber}</Descriptions.Item>
+                                        <Descriptions.Item label="Email">{selectedNhaTro.email}</Descriptions.Item>
+                                    </Descriptions>
+
+                                    <Divider orientation="left">Mô tả</Divider>
+                                    <div style={{ whiteSpace: 'pre-line', marginBottom: '20px' }}>
+                                        {selectedNhaTro.description}
+                                    </div>
+
+                                    <Divider orientation="left">Hình ảnh</Divider>
                                     <div style={{ marginTop: 16 }}>
-                                        <h4>Hình ảnh</h4>
                                         <Image.PreviewGroup>
                                             <Space wrap>
                                                 {selectedNhaTro.imageUrls.map((url, index) => (
                                                     <Image
                                                         key={index}
-                                                        width={150}
+                                                        width={180}
                                                         src={url}
                                                         alt={`Ảnh ${index + 1}`}
                                                     />
@@ -442,7 +428,7 @@ const NhaTroManagementPage = () => {
                                     </div>
                                 </>
                             )}
-                        </Drawer>
+                        </Modal>
                         <Modal
                             title="Chỉnh sửa thông tin nhà trọ"
                             open={isEditModalVisible}
@@ -452,9 +438,7 @@ const NhaTroManagementPage = () => {
                             <Form
                                 form={editForm}
                                 layout="vertical"
-                                onFinish={(values) => {
-                                    updateNhaTro.mutate(values);
-                                }}
+                                onFinish={handleSubmit}
                             >
                                 <Form.Item name="id" hidden>
                                     <Input />
@@ -493,6 +477,14 @@ const NhaTroManagementPage = () => {
                                     label="Mô tả"
                                 >
                                     <Input.TextArea rows={4} />
+                                </Form.Item>
+
+                                <Form.Item
+                                    name="isActive"
+                                    label="Trạng thái hoạt động"
+                                    valuePropName="checked"
+                                >
+                                    <Switch checkedChildren="Hoạt động" unCheckedChildren="Không hoạt động" />
                                 </Form.Item>
 
                                 <Form.Item label="Danh sách ảnh hiện tại">

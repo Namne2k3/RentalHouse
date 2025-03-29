@@ -1,13 +1,17 @@
 import { DeleteOutlined, EditOutlined, LoadingOutlined, SmileOutlined, UploadOutlined } from '@ant-design/icons';
-import { Button, Input, notification, Pagination, Popconfirm, Space, Spin, Table, Typography, Modal, Form, Upload, Tooltip, Badge, BadgeProps } from 'antd';
+import { Button, Input, notification, Pagination, Popconfirm, Space, Spin, Table, Typography, Modal, Form, Upload, Tooltip, Badge, BadgeProps, Card, Row, Col, Statistic, DatePicker, Select } from 'antd';
 import { useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../hooks';
-import { NhaTro, useRentals, useRentalsByUserId } from '../../hooks/rentalHook';
+import { NhaTro, useRentals, useRentalsByUserId } from '../../hooks/useRentalHook';
 import { setCurrentPagination } from '../../store/slices/pageSlice';
+import { useRentalStatusStats } from '../../hooks/useRentalStats'
 import api from '../../services/api';
+import { Column } from '@ant-design/plots';
+import moment from 'moment';
 
 const { Search } = Input;
 const { Title } = Typography;
+const { Option } = Select;
 
 const STATUS_LABELS = {
     0: { text: 'Chưa duyệt', color: 'warning' },
@@ -21,11 +25,20 @@ const RentalPostManagementPage = () => {
     const dispatch = useAppDispatch();
     const [notificationApi, contextHolder] = notification.useNotification();
     const [filteredInfo, setFilteredInfo] = useState<Record<string, any>>({});
+    const [searchText, setSearchText] = useState('');
+    const [filterDate, setFilterDate] = useState<moment.Moment | null>(null);
+
     const { data: rentals, error, isLoading } = useRentalsByUserId({
         page: currentPagination,
         pageSize: currentPageSize,
         userId: user?.id,
     });
+
+    const {
+        data: statusStats,
+        isLoading: isLoadingStats,
+        error: statsError
+    } = useRentalStatusStats();
 
     // State quản lý modal, form và ảnh
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -43,8 +56,8 @@ const RentalPostManagementPage = () => {
     // Mở modal chỉnh sửa
     const handleUpdate = (record) => {
         setSelectedRental(record);
-        form.setFieldsValue(record); // Điền dữ liệu vào form
-        setImageUrls(record.imageUrls); // Lưu ảnh hiện tại
+        form.setFieldsValue(record);
+        setImageUrls(record.imageUrls);
         setIsModalOpen(true);
     };
 
@@ -52,13 +65,13 @@ const RentalPostManagementPage = () => {
     const handleUploadChange = ({ file }) => {
         if (file.status === "done") {
             const newImageUrl = URL.createObjectURL(file.originFileObj);
-            setImageUrls(prevUrls => [...prevUrls, newImageUrl]); // Thêm ảnh mới vào danh sách
+            setImageUrls(prevUrls => [...prevUrls, newImageUrl]);
         }
     };
 
     // Xử lý xóa ảnh
     const handleDeleteImage = (index) => {
-        setImageUrls(prevUrls => prevUrls.filter((_, i) => i !== index)); // Xóa ảnh khỏi danh sách
+        setImageUrls(prevUrls => prevUrls.filter((_, i) => i !== index));
     };
 
     // Xử lý cập nhật
@@ -85,6 +98,12 @@ const RentalPostManagementPage = () => {
     const handleDelete = (id) => {
         console.log('Xóa nhà trọ có ID:', id);
     };
+
+    const statusData = statusStats ? [
+        { type: 'Đã duyệt', value: statusStats.activePosts },
+        { type: 'Từ chối', value: statusStats.expiredPosts },
+        { type: 'Chờ duyệt', value: statusStats.pendingPosts },
+    ] : [];
 
     const columns = [
         {
@@ -144,16 +163,84 @@ const RentalPostManagementPage = () => {
 
     const handleTableChange = (pagination: any, filters: any) => {
         setFilteredInfo(filters);
-        // If you need to handle pagination here as well
         handleChangePagination(pagination.current, pagination.pageSize);
     };
+
+    const filteredData = rentals?.data?.filter(item => {
+        const matchesSearch = searchText ?
+            item.title.toLowerCase().includes(searchText.toLowerCase()) : true;
+        const matchesDate = filterDate ?
+            moment(item.postedDate).isSame(filterDate, 'day') : true;
+        return matchesSearch && matchesDate;
+    });
 
     return (
         <>
             {contextHolder}
             <Title level={3} style={{ marginBottom: 16 }}>Quản lý bài đăng nhà trọ</Title>
-            <Search placeholder="Nhập id hoặc tiêu đề" enterButton="Tìm kiếm" size="large" style={{ marginBottom: 16, maxWidth: 400 }} />
 
+            {/* Thống kê tổng quan */}
+            <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+                <Col span={8}>
+                    <Card>
+                        <Statistic
+                            title="Tổng số bài đăng"
+                            value={statusStats?.totalPosts || 0}
+                        />
+                    </Card>
+                </Col>
+                <Col span={8}>
+                    <Card>
+                        <Statistic
+                            title="Đã duyệt"
+                            value={statusStats?.activePosts || 0}
+                            valueStyle={{ color: '#3f8600' }}
+                        />
+                    </Card>
+                </Col>
+                <Col span={8}>
+                    <Card>
+                        <Statistic
+                            title="Từ chối"
+                            value={statusStats?.expiredPosts || 0}
+                            valueStyle={{ color: '#cf1322' }}
+                        />
+                    </Card>
+                </Col>
+            </Row>
+
+            {/* Biểu đồ thống kê */}
+            <Card title="Biểu đồ trạng thái bài đăng" style={{ marginBottom: 24 }}>
+                <Column
+                    data={statusData || []}
+                    xField="type"
+                    yField="value"
+                    label={{
+                        position: 'middle',
+                        style: {
+                            fill: '#FFFFFF',
+                            opacity: 0.6,
+                        },
+                    }}
+                />
+            </Card>
+
+            {/* Thanh tìm kiếm và lọc */}
+            <Space style={{ marginBottom: 16 }}>
+                <Search
+                    placeholder="Tìm kiếm theo tiêu đề"
+                    value={searchText}
+                    onChange={e => setSearchText(e.target.value)}
+                    style={{ width: 300 }}
+                />
+                <DatePicker
+                    placeholder="Lọc theo ngày đăng"
+                    onChange={setFilterDate}
+                    style={{ width: 200 }}
+                />
+            </Space>
+
+            {/* Bảng dữ liệu */}
             {isLoading ? (
                 <div style={{ textAlign: 'center', padding: 50 }}>
                     <Spin indicator={<LoadingOutlined style={{ fontSize: 40 }} spin />} />
@@ -161,7 +248,7 @@ const RentalPostManagementPage = () => {
             ) : (
                 <Table
                     columns={columns}
-                    dataSource={rentals?.data || []}
+                    dataSource={filteredData}
                     loading={isLoading}
                     rowKey="id"
                     onChange={handleTableChange}
@@ -212,7 +299,6 @@ const RentalPostManagementPage = () => {
                     <Form.Item name="bathRoom" label="Số phòng vệ sinh">
                         <Input type="number" />
                     </Form.Item>
-                    {/* Trường tải lên ảnh */}
                     <Form.Item label="Danh sách ảnh">
                         {
                             imageUrls.map((imageUrl, index) => (
@@ -231,7 +317,7 @@ const RentalPostManagementPage = () => {
                     <Form.Item label="Tải lên ảnh mới">
                         <Upload
                             showUploadList={false}
-                            beforeUpload={() => false} // Không upload ngay, chỉ lưu vào state
+                            beforeUpload={() => false}
                             onChange={handleUploadChange}
                         >
                             <Button icon={<UploadOutlined />}>Chọn ảnh</Button>

@@ -303,7 +303,7 @@ const ProfilePage = () => {
 
     return (
         <div>
-            <Text text="Quản lý tài khoản" fontFamily={fonts.extraBold} fontSize={32} />
+            {/* <Text text="Quản lý tài khoản" fontFamily={fonts.extraBold} fontSize={32} /> */}
             <Tabs
                 defaultActiveKey="1"
                 items={items}

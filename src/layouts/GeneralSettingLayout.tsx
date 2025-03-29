@@ -10,10 +10,10 @@ const GeneralSettingLayout = ({ children }) => {
     // Danh sách menu
     const items: MenuItemProps = [
         { key: "GeneralPage", label: "Thống kê", icon: <BarChartOutlined /> },
-        { key: "ListRentalPage", label: "Quản lý bài đăng", icon: <ContainerOutlined /> },
+        // { key: "ListRentalPage", label: "Quản lý bài đăng", icon: <ContainerOutlined /> },
         { key: "ProfilePage", label: "Hồ sơ", icon: <UserOutlined /> },
-        { key: "UserAppointmentManagementPage", label: "Lịch hẹn với chủ thuê", icon: <CalendarOutlined /> },
-        { key: "CustomerAppointmentManagementPage", label: "Lịch hẹn với người thuê", icon: <CalendarFilled /> },
+        { key: "MyAppointment", label: "Lịch hẹn của tôi", icon: <CalendarOutlined /> },
+        { key: "OwnerAppointment", label: "Lịch hẹn với khách hàng", icon: <CalendarFilled /> },
     ];
 
     return (
@@ -31,7 +31,7 @@ const GeneralSettingLayout = ({ children }) => {
 
             {/* Nội dung */}
             <Layout>
-                <Content style={{ padding: 24 }}>{children}</Content>
+                <Content style={{ paddingRight: 24, paddingLeft: 24 }}>{children}</Content>
             </Layout>
         </Layout>
     );

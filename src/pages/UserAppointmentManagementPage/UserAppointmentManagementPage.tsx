@@ -4,7 +4,7 @@ import { Button, DatePicker, Empty, Form, Input, Modal, Select, Space, Spin, Tab
 import type { Dayjs } from "dayjs";
 import moment from "moment";
 import { useState } from "react";
-import { useAppointmentsUser } from "../../hooks/appointmentHook";
+import { useAppointmentsUser } from "../../hooks/useAppointmentHook";
 import api from "../../services/api";
 import { AppointmentHistoryDto } from "../../types/appointment";
 

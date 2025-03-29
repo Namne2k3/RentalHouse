@@ -13,7 +13,7 @@ import Text from "../TextComponent/Text";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Favorite, removeFavoriteLocally, removeNhaTroFromSaveList } from "../../store/slices/favoriteSlice";
 import './styles.css';
-import { AppointmentDTO, fetchAppointmentsCustomer } from "../../hooks/appointmentHook";
+import { AppointmentDTO, fetchAppointmentsCustomer, fetchAppointmentsUser } from "../../hooks/useAppointmentHook";
 
 const { useToken } = theme;
 const { useBreakpoint } = Grid;
@@ -98,6 +98,17 @@ const SavedRentalContainer = ({ savedRentalData }: { savedRentalData: Favorite[]
 }
 
 const NotificationContainer = ({ appointments }: { appointments: AppointmentDTO[] }) => {
+    const formatDate = (dateStr: string) => {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('vi-VN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    };
+
     return (
         <div className="saved-rental-layout">
             <Text text="Thông báo" fontFamily={fonts.bold} fontSize={16} />
@@ -107,12 +118,62 @@ const NotificationContainer = ({ appointments }: { appointments: AppointmentDTO[
                     appointments.length > 0
                         ?
                         appointments.map((item, index) => {
-                            console.log(item);
-
                             return (
-                                <Link key={index} to={"/generalSetting/CustomerAppointmentManagementPage"} style={{ padding: 12, borderRadius: 12, backgroundColor: "#f5f5f5", marginTop: 12 }}>
-                                    <Text text={`Bạn vừa có một lịch hẹn mới từ khách hàng`} />
-                                    <Text text={item.fullName} fontFamily={fonts.bold} />
+                                <Link
+                                    key={index}
+                                    to={"/generalSetting/OwnerAppointment"}
+                                    style={{
+                                        padding: 16,
+                                        borderRadius: 12,
+                                        backgroundColor: "#f5f5f5",
+                                        marginTop: 12,
+                                        transition: 'all 0.3s ease',
+                                        ':hover': {
+                                            backgroundColor: '#e6e6e6'
+                                        }
+                                    }}
+                                >
+                                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                                        <Badge color={COLORS.DARK_SLATE} />
+                                        <div style={{ flex: 1 }}>
+                                            <Text
+                                                text={`Lịch hẹn mới từ khách hàng`}
+                                                fontFamily={fonts.bold}
+                                                fontSize={14}
+                                            />
+                                            <div style={{ marginTop: 8 }}>
+                                                <Text
+                                                    text={`Khách hàng: ${item.customerName}`}
+                                                    fontSize={13}
+                                                />
+                                                <Text
+                                                    text={`Thời gian: ${formatDate(item.appointmentTime)}`}
+                                                    fontSize={13}
+                                                />
+                                                <Text
+                                                    text={`Địa chỉ: ${item.address}`}
+                                                    fontSize={13}
+                                                    style={{
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                        display: '-webkit-box',
+                                                        WebkitLineClamp: 2,
+                                                        WebkitBoxOrient: 'vertical'
+                                                    }}
+                                                />
+                                            </div>
+                                            <div style={{
+                                                marginTop: 8,
+                                                display: 'flex',
+                                                gap: 16,
+                                                color: COLORS.DARK_SLATE,
+                                                fontSize: 13
+                                            }}>
+                                                <span>📞 {item.customerPhoneNumber}</span>
+                                                <span>✉️ {item.customerEmail}</span>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </Link>
                             )
                         })
@@ -123,7 +184,6 @@ const NotificationContainer = ({ appointments }: { appointments: AppointmentDTO[
         </div>
     )
 }
-
 
 const NavbarComponent = () => {
     const { token } = useToken();
@@ -137,7 +197,7 @@ const NavbarComponent = () => {
 
     const { data: appointments } = useQuery({
         queryKey: ["appointments"],
-        queryFn: () => fetchAppointmentsCustomer({}), // API lấy danh sách lịch hẹn
+        queryFn: () => fetchAppointmentsCustomer({ ownerId: user?.id, status: "Pending" }), // API lấy danh sách lịch hẹn
         staleTime: Infinity,
         refetchOnMount: false,
         refetchOnWindowFocus: false,

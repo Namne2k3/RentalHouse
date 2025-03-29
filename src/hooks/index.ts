@@ -1,6 +1,6 @@
-import { useAppDispatch, useAppSelector } from "./reduxHook";
-import { usePosts } from "./postsHook";
-import useFetch from "./fetchHook";
+import { useAppDispatch, useAppSelector } from "./useAppReduxHook";
+import { usePosts } from "./usePostHook";
+import useFetch from "./useFetchHook";
 export {
     usePosts,
     useAppDispatch,

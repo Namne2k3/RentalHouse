@@ -1,5 +1,5 @@
 import { Col, Image, Row } from 'antd';
-import { NhaTro } from '../../hooks/rentalHook';
+import { NhaTro } from '../../hooks/useRentalHook';
 import './styles.css';
 import Text from '../TextComponent/Text';
 import { formatCurrencyVnd } from '../../utils';

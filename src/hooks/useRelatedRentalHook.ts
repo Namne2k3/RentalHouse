@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { NhaTro } from "./rentalHook";
+import { NhaTro } from "./useRentalHook";
 import api from "../services/api";
 
 /*

@@ -14,6 +14,8 @@ export interface AppointmentDTO {
 }
 
 export interface AppointmentFilter {
+    ownerId?: number;
+    userId?: number;
     customerName?: string;
     date?: Date;
     status?: string;

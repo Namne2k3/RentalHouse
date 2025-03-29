@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Alert, Button, Carousel, Drawer, Empty, Image, Modal, Select, Space, Spin, Table, Tag } from 'antd';
+import { Alert, Button, Carousel, Descriptions, Empty, Image, Modal, Select, Space, Spin, Table, Tag, Typography } from 'antd';
 import api from '../../../services/api';
 import { useState } from 'react';
 import { CheckOutlined, EyeOutlined } from '@ant-design/icons';
@@ -16,9 +16,11 @@ type ReportImage = {
     imageUrl: string
 }
 
+const { Text } = Typography;
+
 const FeedbackManagementPage = () => {
     const [selectedReport, setSelectedReport] = useState(null);
-    const [isDrawerVisible, setIsDrawerVisible] = useState(false);
+    const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
     const [isStatusModalVisible, setIsStatusModalVisible] = useState(false);
     const queryClient = useQueryClient();
     const { data, isLoading, error } = useQuery({
@@ -53,6 +55,20 @@ const FeedbackManagementPage = () => {
         2: "Đã từ chối"
     };
 
+    const formatDate = (dateString: string) => {
+        return new Date(dateString).toLocaleDateString('vi-VN', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    };
+
+    const formatPrice = (price: number) => {
+        return price.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
+    };
+
     const columns = [
         {
             title: 'Thao tác',
@@ -64,7 +80,7 @@ const FeedbackManagementPage = () => {
                         icon={<EyeOutlined />}
                         onClick={() => {
                             setSelectedReport(record);
-                            setIsDrawerVisible(true);
+                            setIsDetailModalVisible(true);
                         }}
                     >
                         Chi tiết
@@ -133,13 +149,24 @@ const FeedbackManagementPage = () => {
             render: (images: ReportImage[]) =>
                 images.length > 0 ? (
                     <Carousel autoplay style={{ width: "100px" }}>
-                        {images.map((img: ReportImage, index: number) => (
-                            <Image key={index} src={img.imageUrl} width={80} />
-                        ))}
+                        {images.map((img: ReportImage, index: number) => {
+
+                            console.log(img);
+
+                            return (
+                                <Image key={index} src={img} width={80} />
+                            )
+                        })}
                     </Carousel>
                 ) : (
                     "Không có ảnh"
                 ),
+        },
+        {
+            title: "Thời gian báo cáo",
+            dataIndex: "createdAt",
+            key: "createdAt",
+            render: (date: string) => formatDate(date),
         },
     ];
 
@@ -152,46 +179,70 @@ const FeedbackManagementPage = () => {
                 rowKey="id"
                 pagination={{ pageSize: 5 }}
             />
-            <Drawer
+            <Modal
                 title="Chi tiết báo cáo"
-                placement="right"
-                onClose={() => setIsDrawerVisible(false)}
-                open={isDrawerVisible}
-                width={600}
+                open={isDetailModalVisible}
+                onCancel={() => setIsDetailModalVisible(false)}
+                width={800}
+                footer={[
+                    <Button key="close" onClick={() => setIsDetailModalVisible(false)}>
+                        Đóng
+                    </Button>
+                ]}
             >
                 {selectedReport && (
                     <div>
-                        <p><strong>ID:</strong> {selectedReport.id}</p>
-                        <p><strong>Người báo cáo:</strong> {selectedReport.userId}</p>
-                        <p><strong>Nhà trọ:</strong> {selectedReport.nhaTroId || 'Không có'}</p>
-                        <p><strong>Loại báo cáo:</strong> {selectedReport.reportType}</p>
-                        <p><strong>Mô tả:</strong> {selectedReport.description}</p>
-                        <p><strong>Trạng thái:</strong>
-                            <Tag color={statusColors[selectedReport.status]}>
-                                {statusLabels[selectedReport.status]}
-                            </Tag>
-                        </p>
+                        <Descriptions title="Thông tin báo cáo" bordered column={1}>
+                            <Descriptions.Item label="ID báo cáo">{selectedReport.id}</Descriptions.Item>
+                            <Descriptions.Item label="Người báo cáo">ID: {selectedReport.userId}</Descriptions.Item>
+                            <Descriptions.Item label="Loại báo cáo">{selectedReport.reportType}</Descriptions.Item>
+                            <Descriptions.Item label="Nội dung báo cáo">{selectedReport.description}</Descriptions.Item>
+                            <Descriptions.Item label="Thời gian báo cáo">{formatDate(selectedReport.createdAt)}</Descriptions.Item>
+                            <Descriptions.Item label="Trạng thái">
+                                <Tag color={statusColors[selectedReport.status]}>
+                                    {statusLabels[selectedReport.status]}
+                                </Tag>
+                            </Descriptions.Item>
+                        </Descriptions>
+
+                        {selectedReport.nhaTro && (
+                            <div style={{ marginTop: '20px' }}>
+                                <Descriptions title="Thông tin nhà trọ bị báo cáo" bordered column={1}>
+                                    <Descriptions.Item label="ID nhà trọ">{selectedReport.nhaTro.id}</Descriptions.Item>
+                                    <Descriptions.Item label="Tiêu đề">{selectedReport.nhaTro.title}</Descriptions.Item>
+                                    <Descriptions.Item label="Địa chỉ">{selectedReport.nhaTro.address}</Descriptions.Item>
+                                    <Descriptions.Item label="Giá thuê">{formatPrice(selectedReport.nhaTro.price)}/tháng</Descriptions.Item>
+                                    <Descriptions.Item label="Diện tích">{selectedReport.nhaTro.area} m²</Descriptions.Item>
+                                    <Descriptions.Item label="Nội thất">{selectedReport.nhaTro.furniture}</Descriptions.Item>
+                                    <Descriptions.Item label="Lượt xem">{selectedReport.nhaTro.viewCount}</Descriptions.Item>
+                                </Descriptions>
+                            </div>
+                        )}
+
                         {selectedReport.images?.length > 0 && (
-                            <div>
-                                <p><strong>Hình ảnh:</strong></p>
-                                <Image.PreviewGroup>
-                                    <Space wrap>
-                                        {selectedReport.images.map((img: ReportImage, index: number) => (
-                                            <Image
-                                                key={index}
-                                                src={img.imageUrl}
-                                                width={120}
-                                                height={120}
-                                                style={{ objectFit: 'cover' }}
-                                            />
-                                        ))}
-                                    </Space>
-                                </Image.PreviewGroup>
+                            <div style={{ marginTop: '20px' }}>
+                                <Text strong>Hình ảnh đính kèm báo cáo:</Text>
+                                <div style={{ marginTop: '10px' }}>
+                                    <Image.PreviewGroup>
+                                        <Space wrap>
+                                            {selectedReport.images.map((img: string, index: number) => (
+                                                <Image
+                                                    key={index}
+                                                    src={img}
+                                                    width={120}
+                                                    height={120}
+                                                    style={{ objectFit: 'cover' }}
+                                                />
+                                            ))}
+                                        </Space>
+                                    </Image.PreviewGroup>
+                                </div>
                             </div>
                         )}
                     </div>
                 )}
-            </Drawer>
+            </Modal>
+
             <Modal
                 title="Xử lý báo cáo"
                 open={isStatusModalVisible}

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import api from "../services/api";
-import { NhaTro } from "./rentalHook";
+import { NhaTro } from "./useRentalHook";
 
 const fetchDetailNhaTro = async (id: string): Promise<NhaTro> => {
     const response = await api.get(`/NhaTro/GetNhaTroById?id=${id}`, {

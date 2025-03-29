@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Button, DatePicker, Empty, Form, Input, Modal, Popover, Row, Select, Space, Spin, Table, Tag, message } from "antd";
 import moment from "moment";
 import { useState } from "react";
-import { useAppointmentsCustomer } from "../../hooks/appointmentHook";
+import { useAppointmentsCustomer } from "../../hooks/useAppointmentHook";
 import api from "../../services/api";
 import { AppointmentHistoryDto } from "../../types/appointment";
 import { useAppSelector } from "../../hooks";
@@ -77,15 +77,12 @@ const CustomerAppointmentManagementPage = () => {
         && (filterDate ? moment(appt.createdAt).isSame(filterDate, 'day') : true)
     );
 
-    console.log("Check appointments >>> ", appointments)
-
     const columns = [
         { title: "Mã số", dataIndex: "id", key: "id" },
         { title: "Khách hàng", dataIndex: "userName", key: "userName" },
         { title: "SĐT", dataIndex: "phoneNumber", key: "phoneNumber" },
         { title: "Email", dataIndex: "email", key: "email" },
         { title: "Địa chỉ", dataIndex: "address", key: "address" },
-        // { title: "Tiêu đề", dataIndex: "title", key: "title" },
         {
             title: "Ngày tạo", dataIndex: "createdAt", key: "createdAt",
             render: (date: string) => {
@@ -93,7 +90,15 @@ const CustomerAppointmentManagementPage = () => {
             }
         },
         {
-            title: "Trạng thái", dataIndex: "status", key: "status",
+            title: "Trạng thái",
+            dataIndex: "status",
+            key: "status",
+            filters: [
+                { text: "Chờ xác nhận", value: "Pending" },
+                { text: "Đã xác nhận", value: "Confirmed" },
+                { text: "Đã hủy", value: "Cancelled" },
+            ],
+            onFilter: (value: string, record) => record.status === value,
             render: (status) => {
                 const color = status === "Pending" ? "orange" : status === "Confirmed" ? "green" : "red";
                 return <Tag color={color}>{statusTable[status]}</Tag>;
@@ -138,10 +143,22 @@ const CustomerAppointmentManagementPage = () => {
                             <Space style={{ marginBottom: 16 }}>
                                 <Input placeholder="Tìm kiếm..." prefix={<SearchOutlined />} onChange={(e) => setSearchText(e.target.value)} />
                                 <DatePicker placeholder="Lọc theo ngày tạo" onChange={(date) => setFilterDate(date)} />
-                                <Select defaultValue={"Pending"} placeholder="Lọc theo trạng thái" allowClear onChange={setFilterStatus}>
-                                    <Option value="Pending">Chờ xác nhận</Option>
-                                    <Option value="Confirmed">Đã xác nhận</Option>
-                                    <Option value="Cancelled">Đã hủy</Option>
+                                <Select
+                                    style={{ width: 200 }}
+                                    defaultValue="Pending"
+                                    placeholder="Lọc theo trạng thái"
+                                    onChange={setFilterStatus}
+                                    allowClear
+                                >
+                                    <Option value="Pending">
+                                        <Tag color="orange">Chờ xác nhận</Tag>
+                                    </Option>
+                                    <Option value="Confirmed">
+                                        <Tag color="green">Đã xác nhận</Tag>
+                                    </Option>
+                                    <Option value="Cancelled">
+                                        <Tag color="red">Đã hủy</Tag>
+                                    </Option>
                                 </Select>
                             </Space>
                             <Table columns={columns} dataSource={filteredAppointments} rowKey="userId" />

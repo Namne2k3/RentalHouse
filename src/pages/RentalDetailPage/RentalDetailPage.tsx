@@ -1,6 +1,6 @@
 import { BookOutlined, CheckCircleFilled, DollarCircleOutlined, HeartOutlined, HomeOutlined, LoadingOutlined, PhoneOutlined, ShareAltOutlined, SmileOutlined, UserOutlined, WarningOutlined } from "@ant-design/icons"
 import { AntdIconProps } from "@ant-design/icons/lib/components/AntdIcon"
-import { Avatar, Button, Carousel, Col, DatePicker, Divider, Empty, Modal, Popconfirm, Row, Spin, notification, Form, Input, Select, Upload, message } from "antd"
+import { Avatar, Button, Carousel, Col, DatePicker, Divider, Empty, Modal, Popconfirm, Row, Spin, notification, Form, Input, Select, Upload, message, Result } from "antd"
 import L from 'leaflet'
 import markerIconUrl from 'leaflet/dist/images/marker-icon.png'
 import markerShadowUrl from 'leaflet/dist/images/marker-shadow.png'
@@ -11,7 +11,7 @@ import { BiBath } from "react-icons/bi"
 import { LuArmchair, LuNotebookPen } from "react-icons/lu"
 import { TbBed } from "react-icons/tb"
 import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet'
-import { Link, useParams } from "react-router"
+import { Link, Navigate, useNavigate, useParams } from "react-router"
 import RelatedRentalComponent from "../../components/RelatedRentalComponent/RelatedRentalComponent"
 import Text from "../../components/TextComponent/Text"
 import { COLORS } from "../../constants/colors"
@@ -103,6 +103,7 @@ const InfoDetailComponent = ({ title, children }: { title: string, children: Rea
 
 const RentalDetailPage = () => {
     const { id } = useParams()
+    const { user } = useAppSelector((state) => state.auth)
     const { data: rental, isLoading, error } = useRentalDetail(id?.toString() || "");
     const { data: relatedRentals } = useRelatedRentals(id?.toString() || "")
     const { savedRentalData } = useAppSelector(state => state.favorite)
@@ -113,6 +114,8 @@ const RentalDetailPage = () => {
     const [isReportModalVisible, setIsReportModalVisible] = useState(false);
     const [reportForm] = Form.useForm();
     const [fileList, setFileList] = useState<UploadFile[]>([]);
+    const [notes, setNotes] = useState('');
+    const navigate = useNavigate()
 
     // Add validation for file upload
     const beforeUpload = (file: RcFile) => {
@@ -212,25 +215,36 @@ const RentalDetailPage = () => {
         }
     };
 
-    const handleSubmitBooking = async () => {
+    const handleSubmitBooking = async (ownerId: any) => {
         if (!timeBooking) {
             notificationApi.error({ message: "Vui lòng chọn thời gian đặt lịch!" });
             return;
         }
 
         try {
+            console.log({
+                nhaTroId: Number(id),
+                userId: Number(user?.id),
+                appointmentTime: new Date(timeBooking.toISOString()),
+                ownerId: Number(ownerId),
+                notes: notes
+            })
             const response = await api.post('/Appointment', {
                 nhaTroId: Number(id),
-                appointmentTime: new Date(timeBooking.toISOString())
+                userId: Number(user?.id),
+                appointmentTime: new Date(timeBooking.toISOString()),
+                ownerId: Number(ownerId),
+                notes: notes
             });
-
 
             if (response.data.isSuccess) {
                 notificationApi.success({ message: response.data.message });
                 setOpenModal(false);
+                setNotes('');
             }
         } catch (err) {
-            notificationApi.error({ message: "Lỗi khi đặt lịch. Vui lòng thử lại!" + err });
+            console.error(err);
+            notificationApi.error({ message: "Lỗi khi đặt lịch. Vui lòng thử lại!" });
         }
     };
 
@@ -472,8 +486,11 @@ const RentalDetailPage = () => {
                                 </Row>
                             </div>
                             :
-                            <Empty
-                                description='Không tìm thấy dữ liệu'
+                            <Result
+                                status="404"
+                                title="404"
+                                subTitle="Trang không tồn tại."
+                                extra={<Button onClick={() => navigate("/")} type="primary">Quay trở lại trang chủ</Button>}
                             />
                     }
                     <Modal
@@ -481,7 +498,7 @@ const RentalDetailPage = () => {
                         title={<Text text="Đặt lịch hẹn trực tiếp" fontFamily={fonts.bold} fontSize={24} />}
                         okText="Đặt lịch"
                         cancelText="Hủy"
-                        onOk={handleSubmitBooking}
+                        onOk={() => handleSubmitBooking(rental?.userId)}
                         onCancel={() => setOpenModal(false)}
                     >
                         <div style={{
@@ -526,6 +543,17 @@ const RentalDetailPage = () => {
                                 <Text fontSize={16} fontFamily={fonts.bold} text="Ngày hẹn" />
                                 <Row style={{ gap: 8, marginTop: 12 }}>
                                     <DatePicker showTime style={{ flex: 1, borderColor: COLORS.DARK_SLATE }} onChange={(date) => setTimeBooking(date?.toDate() || null)} />
+                                </Row>
+
+                                <Text fontSize={16} fontFamily={fonts.bold} text="Ghi chú" />
+                                <Row style={{ gap: 8 }}>
+                                    <Input.TextArea
+                                        placeholder="Nhập ghi chú cho chủ nhà trọ"
+                                        value={notes}
+                                        onChange={(e) => setNotes(e.target.value)}
+                                        style={{ width: '100%' }}
+                                        rows={4}
+                                    />
                                 </Row>
                             </div>
 

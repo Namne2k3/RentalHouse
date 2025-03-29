@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { COLORS } from "../../constants/colors";
 import { fonts } from "../../constants/fonts";
-import { NhaTro } from "../../hooks/rentalHook";
+import { NhaTro } from "../../hooks/useRentalHook";
 import { formatCurrencyVnd, formatPhoneNumber } from "../../utils";
 import Text from "../TextComponent/Text";
 import './styles.css';

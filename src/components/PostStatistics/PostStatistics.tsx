@@ -1,10 +1,21 @@
-import React from 'react';
-import { Card, Row, Col, Table, Statistic, Spin } from 'antd';
+import React, { useState } from 'react';
+import { Card, Row, Col, Table, Statistic, Spin, Input, Select, DatePicker, Space } from 'antd';
 import { Column } from '@ant-design/plots';
 import { useRentalViewStats, useRentalStatusStats } from '../../hooks/useRentalStats';
-import { RentalViewStats, RentalStatusStats } from '../../types/rental';
+import { RentalViewStats } from '../../types/rental';
+import { SearchOutlined } from '@ant-design/icons';
+import moment from 'moment';
+import AIAnalysis from '../AIAnalysis/AIAnalysis';
+import { renderMatches } from 'react-router';
+import { formatCurrencyVnd } from '../../utils';
+
+const { Option } = Select;
 
 const PostStatistics = () => {
+    const [searchText, setSearchText] = useState('');
+    const [filterStatus, setFilterStatus] = useState<string | null>(null);
+    const [filterDate, setFilterDate] = useState<moment.Moment | null>(null);
+
     const {
         data: viewStats,
         isLoading: isLoadingViews,
@@ -27,15 +38,45 @@ const PostStatistics = () => {
 
     const columns = [
         {
-            title: 'Tiêu đề',
-            dataIndex: 'title',
-            key: 'title',
+            title: 'Mã số',
+            dataIndex: 'id',
+            key: 'id',
+            render: (date: string) => <strong>{date}</strong>
+        },
+        {
+            title: 'Địa chỉ',
+            dataIndex: 'address',
+            key: 'address',
+            filteredValue: [searchText],
+            onFilter: (_, record) =>
+                record.title.toLowerCase().includes(searchText.toLowerCase()),
         },
         {
             title: 'Ngày đăng',
             dataIndex: 'postedDate',
             key: 'postedDate',
             render: (date: string) => new Date(date).toLocaleDateString('vi-VN'),
+            sorter: (a: RentalViewStats, b: RentalViewStats) =>
+                new Date(a.postedDate).getTime() - new Date(b.postedDate).getTime(),
+        },
+        {
+            title: 'Ngày hết hạn',
+            dataIndex: 'expiredDate',
+            key: 'expiredDate',
+            render: (date: string) => new Date(date).toLocaleDateString('vi-VN'),
+            sorter: (a: RentalViewStats, b: RentalViewStats) =>
+                new Date(a.expiredDate).getTime() - new Date(b.expiredDate).getTime(),
+        },
+        {
+            title: 'Giá',
+            dataIndex: 'price',
+            key: 'price',
+            render: (price: number) => formatCurrencyVnd(price)
+        },
+        {
+            title: 'Diện tích',
+            dataIndex: 'area',
+            key: 'area'
         },
         {
             title: 'Lượt xem',
@@ -45,8 +86,17 @@ const PostStatistics = () => {
         },
         {
             title: 'Trạng thái',
-            dataIndex: 'status',
-            key: 'status',
+            dataIndex: 'expiredDate',
+            key: 'expiredDate',
+            render: (date: string) => {
+                const now = new Date();
+                const isExpired = new Date(date) < now;
+                return (
+                    <span style={{ color: isExpired ? 'red' : 'green' }}>
+                        {isExpired ? 'Hết hạn' : 'Còn hạn'}
+                    </span>
+                );
+            },
         },
     ];
 
@@ -55,6 +105,26 @@ const PostStatistics = () => {
         { type: 'Đã hết hạn', value: statusStats.expiredPosts },
         { type: 'Chờ duyệt', value: statusStats.pendingPosts },
     ] : [];
+
+    const filteredData = viewStats?.filter(item => {
+        const now = new Date();
+
+        const matchesSearch = searchText
+            ? item.title.toLowerCase().includes(searchText.toLowerCase())
+            : true;
+
+        const matchesStatus = filterStatus
+            ? (filterStatus === 'valid' ? new Date(item.expiredDate) >= now : new Date(item.expiredDate) < now)
+            : true;
+
+        const matchesDate = filterDate
+            ? moment(item.postedDate).isSame(filterDate, 'day')
+            : true;
+
+        return matchesSearch && matchesStatus && matchesDate;
+    });
+
+
 
     return (
         <div>
@@ -87,6 +157,10 @@ const PostStatistics = () => {
                 </Col>
             </Row>
 
+            <div style={{ marginBottom: 24 }}>
+                <AIAnalysis viewStats={viewStats || []} />
+            </div>
+
             <Card title="Biểu đồ trạng thái bài đăng" style={{ marginBottom: 24 }}>
                 <Column
                     data={statusData || []}
@@ -102,10 +176,34 @@ const PostStatistics = () => {
                 />
             </Card>
 
-            <Card title="Thống kê lượt xem bài đăng">
+            <Card title="Bài đăng của bạn">
+                <Space style={{ marginBottom: 16 }}>
+                    <Input
+                        placeholder="Tìm kiếm theo địa chỉ"
+                        prefix={<SearchOutlined />}
+                        value={searchText}
+                        onChange={e => setSearchText(e.target.value)}
+                        style={{ width: 200 }}
+                    />
+                    <Select
+                        placeholder="Lọc theo hạn sử dụng"
+                        allowClear
+                        style={{ width: 200 }}
+                        onChange={setFilterStatus}
+                    >
+                        <Option value="valid">Còn hạn</Option>
+                        <Option value="expired">Hết hạn</Option>
+                    </Select>
+
+                    <DatePicker
+                        placeholder="Lọc theo ngày đăng"
+                        onChange={setFilterDate}
+                        style={{ width: 200 }}
+                    />
+                </Space>
                 <Table
-                    columns={columns || []}
-                    dataSource={viewStats || []}
+                    columns={columns}
+                    dataSource={filteredData}
                     rowKey="id"
                     pagination={{ pageSize: 10 }}
                 />

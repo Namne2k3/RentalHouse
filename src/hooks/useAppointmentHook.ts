@@ -1,17 +1,28 @@
-import { useQuery } from "@tanstack/react-query";
-import api from "../services/api";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import api from '../services/api';
 import { AppointmentDTO, AppointmentFilter, AppointmentStatsDto, AppointmentTimeStatsDto } from "../types/appointment";
 
+export interface CreateAppointmentDto {
+    nhaTroId: number;
+    ownerId: number;
+    appointmentTime: string;
+    notes?: string;
+}
+
+export interface UpdateAppointmentStatusDto {
+    appointmentId: number;
+    status: 'Pending' | 'Confirmed' | 'Completed' | 'Cancelled';
+    notes?: string;
+}
+
 export const fetchAppointmentsUser = async (filters: AppointmentFilter): Promise<AppointmentDTO[]> => {
-    const response = await api.get('/Appointment/GetUserAppointments', {
-        params: filters
-    });
+    const response = await api.get(`/Appointment/User/${filters.userId}`);
 
     return response.data;
 };
 
 export const fetchAppointmentsCustomer = async (filters: AppointmentFilter): Promise<AppointmentDTO[]> => {
-    const response = await api.get('/Appointment/GetOwnerAppointments', {
+    const response = await api.get(`/Appointment/Owner/${filters.ownerId}`, {
         params: filters
     });
 
@@ -73,5 +84,49 @@ export const useAppointmentTimeStats = () => {
         gcTime: 1000 * 60 * 5,
         refetchOnWindowFocus: false,
         retry: 2,
+    });
+};
+
+export const useAppointments = (filter: AppointmentFilter) => {
+    return useQuery({
+        queryKey: ['appointments', filter],
+        queryFn: async () => {
+            const response = await api.get('/Appointments', { params: filter });
+            return response.data;
+        }
+    });
+};
+
+
+export const useCreateAppointment = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (data: CreateAppointmentDto) => {
+            const response = await api.post('/Appointments', data);
+            return response.data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['appointments'] });
+            queryClient.invalidateQueries({ queryKey: ['appointmentStats'] });
+        }
+    });
+};
+
+export const useUpdateAppointmentStatus = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (data: UpdateAppointmentStatusDto) => {
+            const response = await api.put(`/Appointments/${data.appointmentId}/status`, {
+                status: data.status,
+                notes: data.notes
+            });
+            return response.data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['appointments'] });
+            queryClient.invalidateQueries({ queryKey: ['appointmentStats'] });
+        }
     });
 };
